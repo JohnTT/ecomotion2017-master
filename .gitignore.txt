@@ -19,5 +19,5 @@
 *.nsxPreview
 # Ditto, except for simulation netlist files
 
-*.LOG 
+*.log
 # Log files are pretty pointless apparently (?)
