@@ -83,9 +83,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_CAN1_Init();
+  //MX_CAN1_Init();
   MX_USART2_UART_Init();
-  MX_CAN2_Init();
+  //MX_CAN2_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -96,6 +96,11 @@ int main(void)
   while (1)
   {
   /* USER CODE END WHILE */
+	  printf("MAIN LOOP");
+	  printf("\n\r");
+
+	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	  HAL_Delay(100);
 
   /* USER CODE BEGIN 3 */
 
@@ -318,6 +323,8 @@ static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleType
 		break;
 	}
 }
+
+// Needed for printf
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart2, &ch, 1, 1);
 }
@@ -397,6 +404,8 @@ static void MX_CAN2_Init(void)
 		Error_Handler();
 	}
 }
+
+
 /* USER CODE END 4 */
 
 /**
