@@ -35,18 +35,35 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "master.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
 
+TIM_HandleTypeDef htim1;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+static float DIAMETER = 0.50; //50 cm diameter
+static float PI = 3.1415926535; //the number pi
+static int CLOCKSPEED = 20000; //timer's clock
+float rpmChan1; //revolutions per minute for one of the wheels of the vehicle
+float speedChan1; //holds the car's speed from tim1 channel 1
+//float rpmChan2; //revolutions per minute for the other wheel of the vehicle
+//float speedChan2; //holds the car's speed from tim1 channel 2
+int ADCScalingFactor; //should be constant
+double NORMALFACTOR; //should be constant
+unsigned int counter; //holds tim1 clock
+unsigned int analog; //holds the analog value for hadc1
+unsigned int tim1Ch1Capture = 70000; //holds the last value from tim1 channel 1
+unsigned int tim1Ch1Compare; //holds the compared value from tim1 channel 1
+unsigned int tim1Ch1Overflow; //holds the overflow bit for channel 1 when the tim1 clock resets to 0
+char c[10]; //holds string values
+int blinky = 0; //does stuff
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,6 +73,7 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CAN2_Init(void);
+static void MX_TIM1_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -83,9 +101,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_CAN1_Init();
+  MX_CAN1_Init();
   MX_USART2_UART_Init();
   //MX_CAN2_Init();
+//  MX_TIM1_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -93,14 +112,24 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_Delay(2000);
   while (1)
   {
   /* USER CODE END WHILE */
-
+ // printf("Sending data now\n\r");
+  HAL_Delay(100);
+  HAL_StatusTypeDef status;
+  hcan1.pTxMsg->IDE = CAN_ID_STD;
+  hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+  hcan1.pTxMsg->StdId = ecoMotion_Master;
+  hcan1.pTxMsg->Data[0] = 1;
+  hcan1.pTxMsg->DLC = 1;
+  status = HAL_CAN_Transmit_IT(&hcan1);
+  if (status != HAL_OK) {
+	  Error_Handler();
+  }
+//  printf("Finished sending data\n\r");
   /* USER CODE BEGIN 3 */
-	  printf("MAIN LOOP");
-	  printf("\n\r");
-	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */
@@ -162,52 +191,6 @@ void SystemClock_Config(void)
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
-//
-///* CAN1 init function */
-//static void MX_CAN1_Init(void)
-//{
-//
-//  hcan1.Instance = CAN1;
-//  hcan1.Init.Prescaler = 3;
-//  hcan1.Init.Mode = CAN_MODE_NORMAL;
-//  hcan1.Init.SJW = CAN_SJW_1TQ;
-//  hcan1.Init.BS1 = CAN_BS1_12TQ;
-//  hcan1.Init.BS2 = CAN_BS2_2TQ;
-//  hcan1.Init.TTCM = DISABLE;
-//  hcan1.Init.ABOM = DISABLE;
-//  hcan1.Init.AWUM = DISABLE;
-//  hcan1.Init.NART = DISABLE;
-//  hcan1.Init.RFLM = DISABLE;
-//  hcan1.Init.TXFP = DISABLE;
-//  if (HAL_CAN_Init(&hcan1) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-//
-//}
-//
-///* CAN2 init function */
-//static void MX_CAN2_Init(void)
-//{
-//
-//  hcan2.Instance = CAN2;
-//  hcan2.Init.Prescaler = 16;
-//  hcan2.Init.Mode = CAN_MODE_NORMAL;
-//  hcan2.Init.SJW = CAN_SJW_1TQ;
-//  hcan2.Init.BS1 = CAN_BS1_1TQ;
-//  hcan2.Init.BS2 = CAN_BS2_1TQ;
-//  hcan2.Init.TTCM = DISABLE;
-//  hcan2.Init.ABOM = DISABLE;
-//  hcan2.Init.AWUM = DISABLE;
-//  hcan2.Init.NART = DISABLE;
-//  hcan2.Init.RFLM = DISABLE;
-//  hcan2.Init.TXFP = DISABLE;
-//  if (HAL_CAN_Init(&hcan2) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-//
-//}
 
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
@@ -259,6 +242,95 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
+	printf("Message Sent Successfully:");
+	printf("\n\r");
+}
+void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
+	printf("Message Received by:");
+	printf(itoa(hcan->pRxMsg->StdId, c, 10));
+	printf("\n\r");
+	if (hcan->pRxMsg->StdId == 0x124) {
+		//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
+		//printf("Good stuff");
+	}
+	if (HAL_CAN_Receive_IT(hcan, CAN_FIFO0) != HAL_OK) {
+		Error_Handler();
+	}
+}
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+	counter = __HAL_TIM_GetCounter(&htim1); //read TIM1 counter value
+	if (htim->Instance == TIM1){
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
+			if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
+				if (tim1Ch1Overflow)
+					tim1Ch1Compare = 65535 - tim1Ch1Capture + counter; //flip around
+				else
+					tim1Ch1Compare = counter - tim1Ch1Capture; //going up
+			}
+			tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
+			tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
+		}
+		printf("Captured Tim1 Value:");
+		printf(itoa(tim1Ch1Compare, c, 10));
+		printf("\n\r");
+		speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
+		//__HAL_TIM_SetCounter(htim, 0); //resets the counter after input capture interrupt occurs
+	}
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update event (wrap back to 0)
+	//put overflow bit stuff here.
+	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	printf("we elapsed");
+	if(tim1Ch1Overflow && tim1Ch1Capture != 70000){
+		Error_Handler();//error handler stuff, nothing for now
+	}
+	else {
+		tim1Ch1Overflow = 1;
+	}
+
+}
+int getTim1Prescaler(){
+	return HAL_RCC_GetPCLK2Freq() / 20000; //since it is multiplied by 2
+}
+char *itoa (int value, char *result, int base)
+{
+    // check that the base if valid
+    if (base < 2 || base > 36) {
+        *result = '\0';
+        return result;
+    }
+
+    char* ptr = result, *ptr1 = result, tmp_char;
+    int tmp_value;
+
+    do {
+        tmp_value = value;
+        value /= base;
+        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+    } while ( value );
+
+    // Apply negative sign
+    if (tmp_value < 0) *ptr++ = '-';
+    *ptr-- = '\0';
+    while (ptr1 < ptr) {
+        tmp_char = *ptr;
+        *ptr--= *ptr1;
+        *ptr1++ = tmp_char;
+    }
+    return result;
+}
+void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal){
+	*rpmVal = (clockSpeed*1.0) / (compareVal* 2.0) * 60; //revs per min
+	*speedVal = (*rpmVal * 2 * PI * wheelDiameter) / 60; //speedChan1, in m/s
+	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
+	printf("Revs per min: ");
+	printf(itoa(*rpmVal, c, 10));
+	printf("\n\r");
+	printf("Real Speed: ");
+	printf(itoa(*speedVal, c, 10));
+	printf("\n\r");
+}
 static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan) {
 	uint8_t prescaleFactor = 0;
 	switch (periphClock) {
@@ -314,8 +386,6 @@ static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleType
 		break;
 	}
 }
-
-// Needed for printf
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart2, &ch, 1, 1);
 }
@@ -395,8 +465,52 @@ static void MX_CAN2_Init(void)
 		Error_Handler();
 	}
 }
+static void MX_TIM1_Init(void)
+{
 
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+  TIM_IC_InitTypeDef sConfigIC;
 
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 65535;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 0;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 15;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
 /* USER CODE END 4 */
 
 /**
@@ -406,12 +520,21 @@ static void MX_CAN2_Init(void)
   */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler */
-  /* User can add his own implementation to report the HAL error return state */
-  while(1) 
-  {
-  }
-  /* USER CODE END Error_Handler */ 
+	/* USER CODE BEGIN Error_Handler */
+	/* User can add his own implementation to report the HAL error return state */
+	HAL_StatusTypeDef status;
+	do
+	{
+		printf("Error Handler\n\r");
+
+		hcan1.pTxMsg->IDE = CAN_ID_STD;
+		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
+		hcan1.pTxMsg->DLC = 0;
+		status = HAL_CAN_Transmit_IT(&hcan1);
+		HAL_Delay(100);
+	} while(status != HAL_OK);
+	/* USER CODE END Error_Handler */
 }
 
 #ifdef USE_FULL_ASSERT
