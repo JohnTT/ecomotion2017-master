@@ -1,0 +1,72 @@
+In this file, I will be including possible codes, which correspond to data
+bytes, that will be sent over communication protocols, primarily CANBus.
+In relation to the throttle controller.
+
+For general case, IDs will be one byte each, and each sensor will have its own
+unique ID.
+For all sensors, unless otherwise specified, we will be sending two bytes of 
+data.
+ +) The first is the ID of the sensor, where the data is coming from.
+ +) The second is the actual information, whether it is temps, speeds, or other.
+The IDs correspond as the following (in hex):
+
++) Front right wheel temperature sensor: 00
++) Front left wheel temperature sensor : 01
++) Back wheel temperature sensor       : 02
++) Motor temperature sensor            : 03
++) Throttle speed sensor               : 04
++) Right wheel speed sensor            : 05
++) Left wheel speed sensor             : 06
++) Back wheel speed sensor             : 07
++) Temperature sensor for throttle MCU : 08
++) Humidity sensor for throttle MCU    : 09
++) Temperature sensor for master MCU   : 0A 
++) Humidity sensor for master MCU      : 0B 
++) Temperature sensor for display MCU  : 0C 
++) Humidity sensor for display MCU     : 0D 
++) Brake position sensor               : 0E 
++) Accelerometer (IMU) sensor          : 0F 
+This is just a random possibility for IDs we can use, it will most likely change
+later.
+
+
+Temperature codes for brakes:
+We will be using the same format as the data sheet for the temperature sensors 
+specify. They use an 8bit 2s complement format, where each unit value represents
+a degree in C.
+Examples
++) 0001 1001 corresponds to 25 degrees C, since 0001 1001 is 25 in binary.
++) 1110 0111 corresponds to -25 degrees C, since 1110 0111 is -25 in 2s 
+complement binary format.
+
+
+Throttle codes for potentiometer:
+Since, as of this moment, we do not yet have the throttle sensors specced out,
+we will invent our own codes.
+We will be using the same format as the temperature codes (2s complement).
+Positive values will simply be the speed of the vehicle.
+Negative values will be the speed of the vehicle, in reverse (if rolling back).
++) 0001 1011 corresponds to 27km/h. 0000 1111 corresponds to 15 km/h.
++) 1110 1011 corresponds to 21km/h in reverse.
+
+
+Temperature and Humidity codes for on-board sensor:
+This kind of sensor communicates a data pair at a time, each which consist of 
+a 16 bit unsigned integer, for a total of 32 bits.
+The first of the pair is temperature, the second is the humidity.
+They have given conversion equations for this output.
++) For temperature: T[C] = -45 + 175*(St / (2^16 - 1)).
+Where St is the first 16 bits of the data pair. The answer is in degrees C.
++) For humidity: RH = 100 * (Srh / (2^16 - 1)).
+Where Srh is the second 16 bits of the data pair. The answer is in percentage.
+
+There are a few ways to communicate this.
+For the time being, I've decided to stick with ID-data format. (byte-byte).
+As such, the temperature and humidity have two different IDs, each to represent
+their own data. 
+So, temperature will be communicated identically to the brake temperature
+sensors.
+And humidity will be communicated as an unsigned integer, since its values can
+only range from 0% to 100%.
+Since these sensors aren't super accurate, and we probably won't need decimal 
+places anyways, I've decided to discard them, so we only pass integers.

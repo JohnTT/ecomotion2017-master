@@ -117,7 +117,7 @@ int main(void)
   {
   /* USER CODE END WHILE */
  // printf("Sending data now\n\r");
-  HAL_Delay(100);
+  HAL_Delay(500);
   HAL_StatusTypeDef status;
   hcan1.pTxMsg->IDE = CAN_ID_STD;
   hcan1.pTxMsg->RTR = CAN_RTR_DATA;

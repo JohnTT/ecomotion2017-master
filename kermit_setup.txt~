@@ -1,0 +1,10 @@
+The following is in the bash terminal, for mac OS
+
+>kermit
+
+>set port /dev/tty."your usb port here"
+>set speed "your baud speed of the USART"
+>set carrier-watch off
+>set flow-control none
+>set prefixing all
+>c
