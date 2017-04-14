@@ -14,7 +14,6 @@
  * Use this function to parse CAN byte stream into structures.
  * memcpy(&parsedData, data, sizeof(data));
  */
-
 typedef enum {
 	AllCell_Bat_State_ID = 0x0CFF2020,
 	AllCell_Bat_Info_ID = 0x0CFF2120,
@@ -86,7 +85,7 @@ typedef struct {
 } AllCell_Bat_RTC;
 
 
-// **************************
+//-----------------------------
 
 typedef enum {
 	CAN_PACKET_SET_DUTY = 0,

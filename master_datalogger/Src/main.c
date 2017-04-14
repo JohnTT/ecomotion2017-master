@@ -1,40 +1,44 @@
 /**
-  ******************************************************************************
-  * File Name          : main.c
-  * Description        : Main program body
-  ******************************************************************************
-  *
-  * COPYRIGHT(c) 2017 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : main.c
+ * Description        : Main program body
+ ******************************************************************************
+ *
+ * COPYRIGHT(c) 2017 STMicroelectronics
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ *   3. Neither the name of STMicroelectronics nor the names of its contributors
+ *      may be used to endorse or promote products derived from this software
+ *      without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ ******************************************************************************
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "master.h"
 /* USER CODE END Includes */
 
@@ -48,6 +52,16 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+AllCell_Bat_Current BMS_Bat_State;
+AllCell_Bat_Current BMS_Bat_Info;
+AllCell_Bat_Current BMS_Bat_Current;
+AllCell_Bat_Current BMS_Bat_Voltage;
+AllCell_Bat_Current BMS_Bat_Temperature;
+AllCell_Bat_Current BMS_Bat_Status;
+AllCell_Bat_Current BMS_Bat_PwAvailable;
+AllCell_Bat_Current BMS_Bat_RTC;
+
+
 static float DIAMETER = 0.50; //50 cm diameter
 static float PI = 3.1415926535; //the number pi
 static int CLOCKSPEED = 20000; //timer's clock
@@ -62,7 +76,7 @@ unsigned int analog; //holds the analog value for hadc1
 unsigned int tim1Ch1Capture = 70000; //holds the last value from tim1 channel 1
 unsigned int tim1Ch1Compare; //holds the compared value from tim1 channel 1
 unsigned int tim1Ch1Overflow; //holds the overflow bit for channel 1 when the tim1 clock resets to 0
-char c[10]; //holds string values
+char str[10]; //holds string values
 int blinky = 0; //does stuff
 /* USER CODE END PV */
 
@@ -87,157 +101,160 @@ static void MX_TIM1_Init(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
+	/* MCU Configuration----------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_CAN1_Init();
-  MX_USART2_UART_Init();
-  //MX_CAN2_Init();
-//  MX_TIM1_Init();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_CAN1_Init();
+	MX_USART2_UART_Init();
+	MX_CAN2_Init();
+	//MX_TIM1_Init();
 
-  /* USER CODE BEGIN 2 */
+	/* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+	/* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  HAL_Delay(2000);
-  while (1)
-  {
-  /* USER CODE END WHILE */
- // printf("Sending data now\n\r");
-  HAL_Delay(500);
-  HAL_StatusTypeDef status;
-  hcan1.pTxMsg->IDE = CAN_ID_STD;
-  hcan1.pTxMsg->RTR = CAN_RTR_DATA;
-  hcan1.pTxMsg->StdId = ecoMotion_Master;
-  hcan1.pTxMsg->Data[0] = 1;
-  hcan1.pTxMsg->DLC = 1;
-  status = HAL_CAN_Transmit_IT(&hcan1);
-  if (status != HAL_OK) {
-	  Error_Handler();
-  }
-//  printf("Finished sending data\n\r");
-  /* USER CODE BEGIN 3 */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	HAL_Delay(1000);
+	while (1)
+	{
+		/* USER CODE END WHILE */
+		printf("MASTER MAIN LOOP\n\r");
 
-  }
-  /* USER CODE END 3 */
+		//		HAL_StatusTypeDef status;
+		//		hcan1.pTxMsg->IDE = CAN_ID_STD;
+		//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		//		hcan1.pTxMsg->StdId = ecoMotion_Master;
+		//		hcan1.pTxMsg->Data[0] = 1;
+		//		hcan1.pTxMsg->DLC = 1;
+		//		status = HAL_CAN_Transmit_IT(&hcan1);
+		//		if (status != HAL_OK) {
+		//			Error_Handler();
+		//		}
+		//  printf("Finished sending data\n\r");
+
+
+		HAL_Delay(500);
+		/* USER CODE BEGIN 3 */
+
+	}
+	/* USER CODE END 3 */
 
 }
 
 /** System Clock Configuration
-*/
+ */
 void SystemClock_Config(void)
 {
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-    /**Configure the main internal regulator output voltage 
-    */
-  __HAL_RCC_PWR_CLK_ENABLE();
+	/**Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
 
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 144;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	/**Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 144;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 2;
+	RCC_OscInitStruct.PLL.PLLR = 2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+	/**Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+	/**Configure the Systick interrupt time
+	 */
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
-    /**Configure the Systick 
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+	/**Configure the Systick
+	 */
+	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+	/* SysTick_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
 {
 
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	huart2.Instance = USART2;
+	huart2.Init.BaudRate = 38400;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX_RX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	if (HAL_UART_Init(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
 }
 
 /** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
+ * Analog
+ * Input
+ * Output
+ * EVENT_OUT
+ * EXTI
+ */
 static void MX_GPIO_Init(void)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOH_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : LD2_Pin */
+	GPIO_InitStruct.Pin = LD2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -247,15 +264,74 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("\n\r");
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
-	printf("Message Received by:");
-	printf(itoa(hcan->pRxMsg->StdId, c, 10));
-	printf("\n\r");
-	if (hcan->pRxMsg->StdId == 0x124) {
-		//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
-		//printf("Good stuff");
+	const static uint8_t CAN1_Enabled = 0;
+	printf("CAN Message Received from FIFO ");
+	printf(itoa(hcan->pRxMsg->FIFONumber, str, 16));
+			printf("\n\r");
+	// CAN_FIFO1 = BMS CAN Bus @ 125Kbps
+	if (CAN1_Enabled && hcan->pRxMsg->FIFONumber == CAN_FIFO1) {
+		printf("CAN 1 Message Received by:");
+		printf(itoa(hcan->pRxMsg->ExtId, str, 16));
+		printf("\n\r");
+		switch (hcan->pRxMsg->ExtId) {
+
+		case AllCell_Bat_State_ID:
+			memcpy(&BMS_Bat_State, hcan->pRxMsg->Data, sizeof(BMS_Bat_State));
+			break;
+
+		case AllCell_Bat_Info_ID:
+			memcpy(&BMS_Bat_Info, hcan->pRxMsg->Data, sizeof(BMS_Bat_Info));
+			break;
+
+		case AllCell_Bat_Current_ID:
+			memcpy(&BMS_Bat_Current, hcan->pRxMsg->Data, sizeof(BMS_Bat_Current));
+			break;
+
+		case AllCell_Bat_Voltage_ID:
+			memcpy(&BMS_Bat_Voltage, hcan->pRxMsg->Data, sizeof(BMS_Bat_Voltage));
+
+			break;
+
+		case AllCell_Bat_Temperature_ID:
+			memcpy(&BMS_Bat_Temperature, hcan->pRxMsg->Data, sizeof(BMS_Bat_Temperature));
+			break;
+
+		case AllCell_Bat_Status_ID:
+			memcpy(&BMS_Bat_Status, hcan->pRxMsg->Data, sizeof(BMS_Bat_Status));
+			break;
+
+		case AllCell_Bat_PwAvailable_ID:
+			memcpy(&BMS_Bat_PwAvailable, hcan->pRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
+			break;
+
+		case AllCell_Bat_RTC_ID:
+			memcpy(&BMS_Bat_RTC, hcan->pRxMsg->Data, sizeof(BMS_Bat_RTC));
+			break;
+
+		default:
+			break;
+
+		}
+
+		if (HAL_CAN_Receive_IT(hcan, CAN_FIFO1) != HAL_OK) {
+			Error_Handler();
+		}
 	}
-	if (HAL_CAN_Receive_IT(hcan, CAN_FIFO0) != HAL_OK) {
-		Error_Handler();
+
+	// CAN_FIFO0 = Main Vehicle CAN Bus @ 500Kbps
+	else if (hcan->pRxMsg->FIFONumber == CAN_FIFO0){
+		printf("CAN 0 Message Received by:");
+		printf(itoa(hcan->pRxMsg->StdId, str, 10));
+		printf("\n\r");
+
+
+		if (hcan->pRxMsg->StdId == 0x124) {
+			//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
+			//printf("Good stuff");
+		}
+		if (HAL_CAN_Receive_IT(hcan, CAN_FIFO0) != HAL_OK) {
+			Error_Handler();
+		}
 	}
 }
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
@@ -272,7 +348,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 			tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
 		}
 		printf("Captured Tim1 Value:");
-		printf(itoa(tim1Ch1Compare, c, 10));
+		printf(itoa(tim1Ch1Compare, str, 10));
 		printf("\n\r");
 		speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
 		//__HAL_TIM_SetCounter(htim, 0); //resets the counter after input capture interrupt occurs
@@ -295,40 +371,40 @@ int getTim1Prescaler(){
 }
 char *itoa (int value, char *result, int base)
 {
-    // check that the base if valid
-    if (base < 2 || base > 36) {
-        *result = '\0';
-        return result;
-    }
+	// check that the base if valid
+	if (base < 2 || base > 36) {
+		*result = '\0';
+		return result;
+	}
 
-    char* ptr = result, *ptr1 = result, tmp_char;
-    int tmp_value;
+	char* ptr = result, *ptr1 = result, tmp_char;
+	int tmp_value;
 
-    do {
-        tmp_value = value;
-        value /= base;
-        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-    } while ( value );
+	do {
+		tmp_value = value;
+		value /= base;
+		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+	} while ( value );
 
-    // Apply negative sign
-    if (tmp_value < 0) *ptr++ = '-';
-    *ptr-- = '\0';
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr--= *ptr1;
-        *ptr1++ = tmp_char;
-    }
-    return result;
+	// Apply negative sign
+	if (tmp_value < 0) *ptr++ = '-';
+	*ptr-- = '\0';
+	while (ptr1 < ptr) {
+		tmp_char = *ptr;
+		*ptr--= *ptr1;
+		*ptr1++ = tmp_char;
+	}
+	return result;
 }
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal){
 	*rpmVal = (clockSpeed*1.0) / (compareVal* 2.0) * 60; //revs per min
 	*speedVal = (*rpmVal * 2 * PI * wheelDiameter) / 60; //speedChan1, in m/s
 	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
 	printf("Revs per min: ");
-	printf(itoa(*rpmVal, c, 10));
+	printf(itoa(*rpmVal, str, 10));
 	printf("\n\r");
 	printf("Real Speed: ");
-	printf(itoa(*speedVal, c, 10));
+	printf(itoa(*speedVal, str, 10));
 	printf("\n\r");
 }
 static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan) {
@@ -394,7 +470,7 @@ static void MX_CAN1_Init(void)
 	__HAL_RCC_CAN1_CLK_ENABLE();
 	hcan1.Instance = CAN1;
 	hcan1.Init.Mode = CAN_MODE_NORMAL;
-	setCANbitRate(500, 36, &hcan1);
+	setCANbitRate(125, 36, &hcan1);
 	hcan1.Init.TTCM = DISABLE;
 	hcan1.Init.ABOM = DISABLE;
 	hcan1.Init.AWUM = DISABLE;
@@ -417,7 +493,7 @@ static void MX_CAN1_Init(void)
 	canFilterConfig.FilterIdLow = 0x0000;
 	canFilterConfig.FilterMaskIdHigh = 0x0000;
 	canFilterConfig.FilterMaskIdLow = 0x0000;
-	canFilterConfig.FilterFIFOAssignment = 0;
+	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
 	canFilterConfig.FilterActivation = ENABLE;
 	canFilterConfig.BankNumber = 14;
 	if(HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig) != HAL_OK) {
@@ -455,7 +531,7 @@ static void MX_CAN2_Init(void)
 	canFilterConfig.FilterIdLow = 0x0000;
 	canFilterConfig.FilterMaskIdHigh = 0x0000;
 	canFilterConfig.FilterMaskIdLow = 0x0000;
-	canFilterConfig.FilterFIFOAssignment = 0;
+	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
 	canFilterConfig.FilterActivation = ENABLE;
 	canFilterConfig.BankNumber = 14;
 	if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
@@ -468,56 +544,56 @@ static void MX_CAN2_Init(void)
 static void MX_TIM1_Init(void)
 {
 
-  TIM_ClockConfigTypeDef sClockSourceConfig;
-  TIM_MasterConfigTypeDef sMasterConfig;
-  TIM_IC_InitTypeDef sConfigIC;
+	TIM_ClockConfigTypeDef sClockSourceConfig;
+	TIM_MasterConfigTypeDef sMasterConfig;
+	TIM_IC_InitTypeDef sConfigIC;
 
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 65535;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 0;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 65535;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 0;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.RepetitionCounter = 0;
+	if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
-  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 15;
-  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+	sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+	sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+	sConfigIC.ICFilter = 15;
+	if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
 }
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @param  None
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @param  None
+ * @retval None
+ */
 void Error_Handler(void)
 {
 	/* USER CODE BEGIN Error_Handler */
@@ -526,12 +602,11 @@ void Error_Handler(void)
 	do
 	{
 		printf("Error Handler\n\r");
-
-		hcan1.pTxMsg->IDE = CAN_ID_STD;
-		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
-		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
-		hcan1.pTxMsg->DLC = 0;
-		status = HAL_CAN_Transmit_IT(&hcan1);
+//		hcan1.pTxMsg->IDE = CAN_ID_STD;
+//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+//		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
+//		hcan1.pTxMsg->DLC = 0;
+//		status = HAL_CAN_Transmit_IT(&hcan1);
 		HAL_Delay(100);
 	} while(status != HAL_OK);
 	/* USER CODE END Error_Handler */
@@ -540,29 +615,29 @@ void Error_Handler(void)
 #ifdef USE_FULL_ASSERT
 
 /**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
+ * @brief Reports the name of the source file and the source line number
+ * where the assert_param error has occurred.
+ * @param file: pointer to the source file name
+ * @param line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE END 6 */
 
 }
 
 #endif
 
 /**
-  * @}
-  */ 
+ * @}
+ */
 
 /**
-  * @}
-*/ 
+ * @}
+ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
