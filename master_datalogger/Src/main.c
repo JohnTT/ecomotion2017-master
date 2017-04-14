@@ -115,10 +115,10 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
-	MX_CAN1_Init();
+	//MX_CAN1_Init();
 	MX_USART2_UART_Init();
-	MX_CAN2_Init();
-	//MX_TIM1_Init();
+	//MX_CAN2_Init();
+	MX_TIM1_Init();
 
 	/* USER CODE BEGIN 2 */
 
@@ -337,16 +337,15 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 	counter = __HAL_TIM_GetCounter(&htim1); //read TIM1 counter value
 	if (htim->Instance == TIM1){
-		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-			if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
-				if (tim1Ch1Overflow)
-					tim1Ch1Compare = 65535 - tim1Ch1Capture + counter; //flip around
-				else
-					tim1Ch1Compare = counter - tim1Ch1Capture; //going up
-			}
-			tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
-			tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
+
+		if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
+			if (tim1Ch1Overflow)
+				tim1Ch1Compare = 65535 - tim1Ch1Capture + counter; //flip around
+			else
+				tim1Ch1Compare = counter - tim1Ch1Capture; //going up
 		}
+		tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
+		tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
 		printf("Captured Tim1 Value:");
 		printf(itoa(tim1Ch1Compare, str, 10));
 		printf("\n\r");
@@ -367,7 +366,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update
 
 }
 int getTim1Prescaler(){
-	return HAL_RCC_GetPCLK2Freq() / 20000; //since it is multiplied by 2
+	return HAL_RCC_GetPCLK2Freq() / 5000; //since it is multiplied by 2
 }
 char *itoa (int value, char *result, int base)
 {
@@ -549,7 +548,7 @@ static void MX_TIM1_Init(void)
 	TIM_IC_InitTypeDef sConfigIC;
 
 	htim1.Instance = TIM1;
-	htim1.Init.Prescaler = 65535;
+	htim1.Init.Prescaler = getTim1Prescaler();
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim1.Init.Period = 0;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
