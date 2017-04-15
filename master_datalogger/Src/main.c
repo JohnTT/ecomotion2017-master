@@ -54,14 +54,14 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-AllCell_Bat_Current BMS_Bat_State;
-AllCell_Bat_Current BMS_Bat_Info;
+AllCell_Bat_State BMS_Bat_State;
+AllCell_Bat_Info BMS_Bat_Info;
 AllCell_Bat_Current BMS_Bat_Current;
-AllCell_Bat_Current BMS_Bat_Voltage;
-AllCell_Bat_Current BMS_Bat_Temperature;
-AllCell_Bat_Current BMS_Bat_Status;
-AllCell_Bat_Current BMS_Bat_PwAvailable;
-AllCell_Bat_Current BMS_Bat_RTC;
+AllCell_Bat_Voltage BMS_Bat_Voltage;
+AllCell_Bat_Temperature BMS_Bat_Temperature;
+AllCell_Bat_Status BMS_Bat_Status;
+AllCell_Bat_PwAvailable BMS_Bat_PwAvailable;
+AllCell_Bat_RTC BMS_Bat_RTC;
 
 
 static float DIAMETER = 0.50; //50 cm diameter
@@ -136,10 +136,44 @@ int main(void)
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		//printf("MAIN LOOP\n\r");
+		printf("MAIN LOOP\n\r");
+		//		HAL_StatusTypeDef status;
+		//		hcan2.pTxMsg->IDE = CAN_ID_STD;
+		//		hcan2.pTxMsg->RTR = CAN_RTR_DATA;
+		//		hcan2.pTxMsg->StdId = 1;
+		//		hcan2.pTxMsg->DLC = 8;
+		//
+		//		status = HAL_CAN_Transmit_IT(&hcan2);
+		//		if (status != HAL_OK) {
+		//			Error_Handler();
+		//		}
+		printf("Current: %u\n\r", BMS_Bat_Info.Current);
+		printf("Voltage: %u\n\r", BMS_Bat_Info.Voltage);
+		printf("Temperature: %u\n\r", BMS_Bat_Info.Temp);
+		printf("Charge Limit: %u\n\r", BMS_Bat_Current.Charge_Limit);
+		printf("Disharge Limit: %u\n\r", BMS_Bat_Current.Discharge_Limit);
+		printf("PwAvailableCharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge%10000);
+		printf("PwAvailableDisharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Disharge%10000);
+
+		printf("Nb Min Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
+		printf("Nb Max Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
+		printf("Cell Min Voltage: %u\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
+		printf("Cell Max Voltage: %u\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
+
+		printf("Avg Cell Temp: %u\n\r", BMS_Bat_Temperature.Avg_Cell_Temp);
+		printf("Temp BMS: %u\n\r", BMS_Bat_Temperature.Temp_BMS);
+
+		printf("Year: %u\n\r", BMS_Bat_RTC.Year);
+		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
+		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
+		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
+		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
+		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+		//printf("Temperature: %u\n\r", BMS_Bat_Info.Temp)
+		printf("\n\r");
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-		HAL_Delay(100);
+		HAL_Delay(1000);
 
 	}
 	/* USER CODE END 3 */
@@ -284,77 +318,73 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("\n\r");
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
-	printf("CAN Message Received from CAN Interface CAN");
-	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
-	printf("\n\r");
+//	printf("CAN Message Received from CAN Interface CAN");
+//	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
+//	printf("\n\r");
+//
+//
+//	if (hcan->pRxMsg->StdId == 1)
+//		printf("CAN 2 message received\n\r\n\r");
 
+	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
+		parseBMSCAN(hcan->pRxMsg);
 	}
+
+
 	if (hcan->Instance == CAN2) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 	}
-	// CAN_FIFO1 = BMS CAN Bus @ 125Kbps
-//	if (hcan->pRxMsg->FIFONumber == CAN_FIFO1) {
-//		printf("CAN 1 Message Received by:");
-//		printf(itoa(hcan->pRxMsg->ExtId, str, 16));
-//		printf("\n\r");
-//		switch (hcan->pRxMsg->ExtId) {
-//
-//		case AllCell_Bat_State_ID:
-//			memcpy(&BMS_Bat_State, hcan->pRxMsg->Data, sizeof(BMS_Bat_State));
-//			break;
-//
-//		case AllCell_Bat_Info_ID:
-//			memcpy(&BMS_Bat_Info, hcan->pRxMsg->Data, sizeof(BMS_Bat_Info));
-//			break;
-//
-//		case AllCell_Bat_Current_ID:
-//			memcpy(&BMS_Bat_Current, hcan->pRxMsg->Data, sizeof(BMS_Bat_Current));
-//			break;
-//
-//		case AllCell_Bat_Voltage_ID:
-//			memcpy(&BMS_Bat_Voltage, hcan->pRxMsg->Data, sizeof(BMS_Bat_Voltage));
-//
-//			break;
-//
-//		case AllCell_Bat_Temperature_ID:
-//			memcpy(&BMS_Bat_Temperature, hcan->pRxMsg->Data, sizeof(BMS_Bat_Temperature));
-//			break;
-//
-//		case AllCell_Bat_Status_ID:
-//			memcpy(&BMS_Bat_Status, hcan->pRxMsg->Data, sizeof(BMS_Bat_Status));
-//			break;
-//
-//		case AllCell_Bat_PwAvailable_ID:
-//			memcpy(&BMS_Bat_PwAvailable, hcan->pRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
-//			break;
-//
-//		case AllCell_Bat_RTC_ID:
-//			memcpy(&BMS_Bat_RTC, hcan->pRxMsg->Data, sizeof(BMS_Bat_RTC));
-//			break;
-//
-//		default:
-//			break;
-//
-//		}
-//
-//	}
-//
-//	// CAN_FIFO0 = Main Vehicle CAN Bus @ 500Kbps
-//	else if (hcan->pRxMsg->FIFONumber == CAN_FIFO0){
-//		printf("CAN 0 Message Received by:");
-//		printf(itoa(hcan->pRxMsg->StdId, str, 10));
-//		printf("\n\r");
-//
-//
-//		if (hcan->pRxMsg->StdId == 0x124) {
-//			//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
-//			//printf("Good stuff");
-//		}
-//	}
+
 	if (HAL_CAN_Receive_IT(hcan, hcan->pRxMsg->FIFONumber) != HAL_OK) {
 		Error_Handler();
+	}
+}
+
+void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
+	int32_t ind = 0;
+
+	switch (BMSRxMsg->ExtId) {
+
+	case AllCell_Bat_State_ID:
+		memcpy(&BMS_Bat_State, BMSRxMsg->Data, sizeof(BMS_Bat_State));
+		break;
+
+	case AllCell_Bat_Info_ID:
+		memcpy(&BMS_Bat_Info, BMSRxMsg->Data, sizeof(BMS_Bat_Info));
+		//BMS_Bat_Info.Voltage = buffer_get_int16(BMSRxMsg->Data, &ind);
+		break;
+
+	case AllCell_Bat_Current_ID:
+		memcpy(&BMS_Bat_Current, BMSRxMsg->Data, sizeof(BMS_Bat_Current));
+		break;
+
+	case AllCell_Bat_Voltage_ID:
+		memcpy(&BMS_Bat_Voltage, BMSRxMsg->Data, sizeof(BMS_Bat_Voltage));
+		break;
+
+	case AllCell_Bat_Temperature_ID:
+		memcpy(&BMS_Bat_Temperature, BMSRxMsg->Data, sizeof(BMS_Bat_Temperature));
+		break;
+
+	case AllCell_Bat_Status_ID:
+		memcpy(&BMS_Bat_Status, BMSRxMsg->Data, sizeof(BMS_Bat_Status));
+		break;
+
+	case AllCell_Bat_PwAvailable_ID:
+		memcpy(&BMS_Bat_PwAvailable, BMSRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
+		break;
+
+	case AllCell_Bat_RTC_ID:
+		memcpy(&BMS_Bat_RTC, BMSRxMsg->Data, sizeof(BMS_Bat_RTC));
+		break;
+
+	default:
+		break;
+
+
+
 	}
 }
 
@@ -519,7 +549,7 @@ static void MX_CAN1_Init(void)
 	canFilterConfig.FilterMaskIdLow = 0x0000;
 	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
 	canFilterConfig.FilterActivation = ENABLE;
-	canFilterConfig.BankNumber = 0;
+	canFilterConfig.BankNumber = 14;
 	if(HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig) != HAL_OK) {
 		Error_Handler();
 	}
@@ -532,7 +562,7 @@ static void MX_CAN2_Init(void)
 	__HAL_RCC_CAN2_CLK_ENABLE();
 	hcan2.Instance = CAN2;
 	hcan2.Init.Mode = CAN_MODE_NORMAL;
-	setCANbitRate(250, 36, &hcan2);
+	setCANbitRate(500, 36, &hcan2);
 	hcan2.Init.TTCM = DISABLE;
 	hcan2.Init.ABOM = DISABLE;
 	hcan2.Init.AWUM = DISABLE;
@@ -548,20 +578,29 @@ static void MX_CAN2_Init(void)
 		Error_Handler();
 	}
 	CAN_FilterConfTypeDef canFilterConfig;
-	canFilterConfig.FilterNumber = 14;
+
 	canFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
 	canFilterConfig.FilterIdHigh = 0x0000;
 	canFilterConfig.FilterIdLow = 0x0000;
 	canFilterConfig.FilterMaskIdHigh = 0x0000;
 	canFilterConfig.FilterMaskIdLow = 0x0000;
-	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
+	canFilterConfig.FilterFIFOAssignment = CAN_FIFO1;
 	canFilterConfig.FilterActivation = ENABLE;
-	canFilterConfig.BankNumber = 0;
+	canFilterConfig.BankNumber = 14;
+	canFilterConfig.FilterNumber = 14;
 	if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
+		printf("not ok\n\r");
 		Error_Handler();
 	}
-	if (HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0) != HAL_OK) {
+	//	for (int i=14; i<=27; i++) {
+	//		canFilterConfig.FilterNumber = i;
+	//		if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
+	//			Error_Handler();
+	//		}
+	//	}
+	if (HAL_CAN_Receive_IT(&hcan2, CAN_FIFO1) != HAL_OK) {
+		printf("not ok\n\r");
 		Error_Handler();
 	}
 }
@@ -575,7 +614,7 @@ static void MX_TIM1_Init(void)
 	htim1.Instance = TIM1;
 	htim1.Init.Prescaler = getTim1Prescaler();
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim1.Init.Period = 0;
+	htim1.Init.Period = 60000;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim1.Init.RepetitionCounter = 0;
 	if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
@@ -609,6 +648,20 @@ static void MX_TIM1_Init(void)
 	{
 		Error_Handler();
 	}
+}
+
+int16_t buffer_get_int16(const uint8_t *buffer, int32_t *index) {
+	int16_t res =	((uint16_t) buffer[*index]) << 8 |
+					((uint16_t) buffer[*index + 1]);
+	*index += 2;
+	return res;
+}
+
+uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index) {
+	uint16_t res = 	((uint16_t) buffer[*index]) << 8 |
+					((uint16_t) buffer[*index + 1]);
+	*index += 2;
+	return res;
 }
 /* USER CODE END 4 */
 
