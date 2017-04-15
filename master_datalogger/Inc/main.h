@@ -47,6 +47,11 @@
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define LED0_Pin GPIO_PIN_0
+#define LED1_Pin GPIO_PIN_1
+#define LED2_Pin GPIO_PIN_2
+#define LED3_Pin GPIO_PIN_3
+#define LEDx_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

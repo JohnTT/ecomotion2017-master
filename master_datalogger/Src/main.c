@@ -136,7 +136,9 @@ int main(void)
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		printf("MAIN LOOP\n\r");
+		//printf("MAIN LOOP\n\r");
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 		HAL_Delay(100);
 
 	}
@@ -268,6 +270,12 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+	GPIO_InitStruct.Pin = LED0_Pin | LED1_Pin | LED2_Pin | LED3_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LEDx_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -279,74 +287,78 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("CAN Message Received from CAN Interface CAN");
 	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
 	printf("\n\r");
-	/*
+
+	if (hcan->Instance == CAN1) {
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
+	}
+	if (hcan->Instance == CAN2) {
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+	}
 	// CAN_FIFO1 = BMS CAN Bus @ 125Kbps
-	if (CAN1_Enabled && hcan->pRxMsg->FIFONumber == CAN_FIFO1) {
-		printf("CAN 1 Message Received by:");
-		printf(itoa(hcan->pRxMsg->ExtId, str, 16));
-		printf("\n\r");
-		switch (hcan->pRxMsg->ExtId) {
-
-		case AllCell_Bat_State_ID:
-			memcpy(&BMS_Bat_State, hcan->pRxMsg->Data, sizeof(BMS_Bat_State));
-			break;
-
-		case AllCell_Bat_Info_ID:
-			memcpy(&BMS_Bat_Info, hcan->pRxMsg->Data, sizeof(BMS_Bat_Info));
-			break;
-
-		case AllCell_Bat_Current_ID:
-			memcpy(&BMS_Bat_Current, hcan->pRxMsg->Data, sizeof(BMS_Bat_Current));
-			break;
-
-		case AllCell_Bat_Voltage_ID:
-			memcpy(&BMS_Bat_Voltage, hcan->pRxMsg->Data, sizeof(BMS_Bat_Voltage));
-
-			break;
-
-		case AllCell_Bat_Temperature_ID:
-			memcpy(&BMS_Bat_Temperature, hcan->pRxMsg->Data, sizeof(BMS_Bat_Temperature));
-			break;
-
-		case AllCell_Bat_Status_ID:
-			memcpy(&BMS_Bat_Status, hcan->pRxMsg->Data, sizeof(BMS_Bat_Status));
-			break;
-
-		case AllCell_Bat_PwAvailable_ID:
-			memcpy(&BMS_Bat_PwAvailable, hcan->pRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
-			break;
-
-		case AllCell_Bat_RTC_ID:
-			memcpy(&BMS_Bat_RTC, hcan->pRxMsg->Data, sizeof(BMS_Bat_RTC));
-			break;
-
-		default:
-			break;
-
-		}
-
-		if (HAL_CAN_Receive_IT(hcan, CAN_FIFO1) != HAL_OK) {
-			Error_Handler();
-		}
-	}
-
-	// CAN_FIFO0 = Main Vehicle CAN Bus @ 500Kbps
-	else if (hcan->pRxMsg->FIFONumber == CAN_FIFO0){
-		printf("CAN 0 Message Received by:");
-		printf(itoa(hcan->pRxMsg->StdId, str, 10));
-		printf("\n\r");
-
-
-		if (hcan->pRxMsg->StdId == 0x124) {
-			//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
-			//printf("Good stuff");
-		}
-	}
-	*/
+//	if (hcan->pRxMsg->FIFONumber == CAN_FIFO1) {
+//		printf("CAN 1 Message Received by:");
+//		printf(itoa(hcan->pRxMsg->ExtId, str, 16));
+//		printf("\n\r");
+//		switch (hcan->pRxMsg->ExtId) {
+//
+//		case AllCell_Bat_State_ID:
+//			memcpy(&BMS_Bat_State, hcan->pRxMsg->Data, sizeof(BMS_Bat_State));
+//			break;
+//
+//		case AllCell_Bat_Info_ID:
+//			memcpy(&BMS_Bat_Info, hcan->pRxMsg->Data, sizeof(BMS_Bat_Info));
+//			break;
+//
+//		case AllCell_Bat_Current_ID:
+//			memcpy(&BMS_Bat_Current, hcan->pRxMsg->Data, sizeof(BMS_Bat_Current));
+//			break;
+//
+//		case AllCell_Bat_Voltage_ID:
+//			memcpy(&BMS_Bat_Voltage, hcan->pRxMsg->Data, sizeof(BMS_Bat_Voltage));
+//
+//			break;
+//
+//		case AllCell_Bat_Temperature_ID:
+//			memcpy(&BMS_Bat_Temperature, hcan->pRxMsg->Data, sizeof(BMS_Bat_Temperature));
+//			break;
+//
+//		case AllCell_Bat_Status_ID:
+//			memcpy(&BMS_Bat_Status, hcan->pRxMsg->Data, sizeof(BMS_Bat_Status));
+//			break;
+//
+//		case AllCell_Bat_PwAvailable_ID:
+//			memcpy(&BMS_Bat_PwAvailable, hcan->pRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
+//			break;
+//
+//		case AllCell_Bat_RTC_ID:
+//			memcpy(&BMS_Bat_RTC, hcan->pRxMsg->Data, sizeof(BMS_Bat_RTC));
+//			break;
+//
+//		default:
+//			break;
+//
+//		}
+//
+//	}
+//
+//	// CAN_FIFO0 = Main Vehicle CAN Bus @ 500Kbps
+//	else if (hcan->pRxMsg->FIFONumber == CAN_FIFO0){
+//		printf("CAN 0 Message Received by:");
+//		printf(itoa(hcan->pRxMsg->StdId, str, 10));
+//		printf("\n\r");
+//
+//
+//		if (hcan->pRxMsg->StdId == 0x124) {
+//			//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
+//			//printf("Good stuff");
+//		}
+//	}
 	if (HAL_CAN_Receive_IT(hcan, hcan->pRxMsg->FIFONumber) != HAL_OK) {
 		Error_Handler();
 	}
 }
+
+
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 	counter = __HAL_TIM_GetCounter(&htim1); //read TIM1 counter value
 	if (htim->Instance == TIM1){
@@ -482,7 +494,7 @@ static void MX_CAN1_Init(void)
 	__HAL_RCC_CAN1_CLK_ENABLE();
 	hcan1.Instance = CAN1;
 	hcan1.Init.Mode = CAN_MODE_NORMAL;
-	setCANbitRate(125, 36, &hcan1);
+	setCANbitRate(250, 36, &hcan1);
 	hcan1.Init.TTCM = DISABLE;
 	hcan1.Init.ABOM = DISABLE;
 	hcan1.Init.AWUM = DISABLE;
@@ -520,7 +532,7 @@ static void MX_CAN2_Init(void)
 	__HAL_RCC_CAN2_CLK_ENABLE();
 	hcan2.Instance = CAN2;
 	hcan2.Init.Mode = CAN_MODE_NORMAL;
-	setCANbitRate(125, 36, &hcan2);
+	setCANbitRate(250, 36, &hcan2);
 	hcan2.Init.TTCM = DISABLE;
 	hcan2.Init.ABOM = DISABLE;
 	hcan2.Init.AWUM = DISABLE;

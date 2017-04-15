@@ -119,6 +119,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 int getTim1Prescaler();
 static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan);
+void parseCANRxMessage();
 char *itoa (int value, char *result, int base);
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal);
 void __io_putchar(uint8_t ch);
