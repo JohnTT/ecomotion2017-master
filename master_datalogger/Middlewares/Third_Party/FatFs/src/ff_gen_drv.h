@@ -1,11 +1,14 @@
 /**
   ******************************************************************************
-  * File Name          : main.h
-  * Description        : This file contains the common defines of the application
+  * @file    ff_gen_drv.h 
+  * @author  MCD Application Team
+  * @version V1.4.1
+  * @date    14-February-2017
+  * @brief   Header for ff_gen_drv.c module.
   ******************************************************************************
+  * @attention
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without 
   * modification, are permitted, provided that the following conditions are met:
@@ -40,43 +43,65 @@
   *
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
+#ifndef __FF_GEN_DRV_H
+#define __FF_GEN_DRV_H
 
-/* USER CODE BEGIN Includes */
+#ifdef __cplusplus
+ extern "C" {
+#endif 
 
-/* USER CODE END Includes */
+/* Includes ------------------------------------------------------------------*/
+#include "diskio.h"
+#include "ff.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 
-#define USART_TX_Pin GPIO_PIN_2
-#define USART_TX_GPIO_Port GPIOA
-#define USART_RX_Pin GPIO_PIN_3
-#define USART_RX_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-#define TMS_Pin GPIO_PIN_13
-#define TMS_GPIO_Port GPIOA
-#define TCK_Pin GPIO_PIN_14
-#define TCK_GPIO_Port GPIOA
-
-/* USER CODE BEGIN Private defines */
-#define LED0_Pin GPIO_PIN_0
-#define LED1_Pin GPIO_PIN_1
-#define LED2_Pin GPIO_PIN_2
-#define LED3_Pin GPIO_PIN_3
-#define LEDx_GPIO_Port GPIOC
-/* USER CODE END Private defines */
-
-/**
-  * @}
+/** 
+  * @brief  Disk IO Driver structure definition  
   */ 
+typedef struct
+{
+  DSTATUS (*disk_initialize) (BYTE);                     /*!< Initialize Disk Drive                     */
+  DSTATUS (*disk_status)     (BYTE);                     /*!< Get Disk Status                           */
+  DRESULT (*disk_read)       (BYTE, BYTE*, DWORD, UINT);       /*!< Read Sector(s)                            */
+#if _USE_WRITE == 1 
+  DRESULT (*disk_write)      (BYTE, const BYTE*, DWORD, UINT); /*!< Write Sector(s) when _USE_WRITE = 0       */
+#endif /* _USE_WRITE == 1 */
+#if _USE_IOCTL == 1  
+  DRESULT (*disk_ioctl)      (BYTE, BYTE, void*);              /*!< I/O control operation when _USE_IOCTL = 1 */
+#endif /* _USE_IOCTL == 1 */
 
-/**
-  * @}
-*/ 
+}Diskio_drvTypeDef;
 
-#endif /* __MAIN_H */
+/** 
+  * @brief  Global Disk IO Drivers structure definition  
+  */ 
+typedef struct
+{ 
+  uint8_t                 is_initialized[_VOLUMES];
+  Diskio_drvTypeDef       *drv[_VOLUMES];
+  uint8_t                 lun[_VOLUMES];
+  __IO uint8_t            nbr;
+
+}Disk_drvTypeDef;
+
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
+uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun);
+uint8_t FATFS_LinkDriver(Diskio_drvTypeDef *drv, char *path);
+uint8_t FATFS_UnLinkDriver(char *path);
+uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, BYTE lun);
+uint8_t FATFS_UnLinkDriverEx(char *path, BYTE lun);
+uint8_t FATFS_GetAttachedDriversNbr(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __FF_GEN_DRV_H */
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

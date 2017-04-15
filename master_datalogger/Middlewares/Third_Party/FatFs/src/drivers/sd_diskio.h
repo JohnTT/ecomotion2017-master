@@ -1,11 +1,14 @@
 /**
   ******************************************************************************
-  * File Name          : main.h
-  * Description        : This file contains the common defines of the application
+  * @file    sd_diskio.h 
+  * @author  MCD Application Team
+  * @version V1.4.1
+  * @date    14-February-2017
+  * @brief   Header for sd_diskio.c module
   ******************************************************************************
+  * @attention
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without 
   * modification, are permitted, provided that the following conditions are met:
@@ -40,43 +43,18 @@
   *
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
+#ifndef __SD_DISKIO_H
+#define __SD_DISKIO_H
 
-/* USER CODE BEGIN Includes */
+/* Includes ------------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* Exported constants --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
+extern Diskio_drvTypeDef  SD_Driver;
 
-/* USER CODE END Includes */
+#endif /* __SD_DISKIO_H */
 
-/* Private define ------------------------------------------------------------*/
-
-#define USART_TX_Pin GPIO_PIN_2
-#define USART_TX_GPIO_Port GPIOA
-#define USART_RX_Pin GPIO_PIN_3
-#define USART_RX_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-#define TMS_Pin GPIO_PIN_13
-#define TMS_GPIO_Port GPIOA
-#define TCK_Pin GPIO_PIN_14
-#define TCK_GPIO_Port GPIOA
-
-/* USER CODE BEGIN Private defines */
-#define LED0_Pin GPIO_PIN_0
-#define LED1_Pin GPIO_PIN_1
-#define LED2_Pin GPIO_PIN_2
-#define LED3_Pin GPIO_PIN_3
-#define LEDx_GPIO_Port GPIOC
-/* USER CODE END Private defines */
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-*/ 
-
-#endif /* __MAIN_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
