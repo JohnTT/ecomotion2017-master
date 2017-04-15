@@ -46,6 +46,8 @@
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
 
+I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
@@ -88,6 +90,7 @@ static void MX_CAN1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_I2C1_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -115,10 +118,11 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
-	//MX_CAN1_Init();
+	MX_CAN1_Init();
+	MX_CAN2_Init();
 	MX_USART2_UART_Init();
-	//MX_CAN2_Init();
 	MX_TIM1_Init();
+	MX_I2C1_Init();
 
 	/* USER CODE BEGIN 2 */
 
@@ -130,23 +134,10 @@ int main(void)
 	while (1)
 	{
 		/* USER CODE END WHILE */
-		printf("MASTER MAIN LOOP\n\r");
 
-		//		HAL_StatusTypeDef status;
-		//		hcan1.pTxMsg->IDE = CAN_ID_STD;
-		//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
-		//		hcan1.pTxMsg->StdId = ecoMotion_Master;
-		//		hcan1.pTxMsg->Data[0] = 1;
-		//		hcan1.pTxMsg->DLC = 1;
-		//		status = HAL_CAN_Transmit_IT(&hcan1);
-		//		if (status != HAL_OK) {
-		//			Error_Handler();
-		//		}
-		//  printf("Finished sending data\n\r");
-
-
-		HAL_Delay(500);
 		/* USER CODE BEGIN 3 */
+		printf("MAIN LOOP\n\r");
+		HAL_Delay(100);
 
 	}
 	/* USER CODE END 3 */
@@ -209,6 +200,27 @@ void SystemClock_Config(void)
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
+
+/* I2C1 init function */
+static void MX_I2C1_Init(void)
+{
+
+	hi2c1.Instance = I2C1;
+	hi2c1.Init.ClockSpeed = 100000;
+	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hi2c1.Init.OwnAddress1 = 0;
+	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hi2c1.Init.OwnAddress2 = 0;
+	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+}
+
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
 {
@@ -264,10 +276,10 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("\n\r");
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
-	const static uint8_t CAN1_Enabled = 0;
-	printf("CAN Message Received from FIFO ");
-	printf(itoa(hcan->pRxMsg->FIFONumber, str, 16));
-			printf("\n\r");
+	printf("CAN Message Received from CAN Interface CAN");
+	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
+	printf("\n\r");
+	/*
 	// CAN_FIFO1 = BMS CAN Bus @ 125Kbps
 	if (CAN1_Enabled && hcan->pRxMsg->FIFONumber == CAN_FIFO1) {
 		printf("CAN 1 Message Received by:");
@@ -329,9 +341,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 			//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, hcan->pRxMsg->Data[0]);
 			//printf("Good stuff");
 		}
-		if (HAL_CAN_Receive_IT(hcan, CAN_FIFO0) != HAL_OK) {
-			Error_Handler();
-		}
+	}
+	*/
+	if (HAL_CAN_Receive_IT(hcan, hcan->pRxMsg->FIFONumber) != HAL_OK) {
+		Error_Handler();
 	}
 }
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
@@ -494,7 +507,7 @@ static void MX_CAN1_Init(void)
 	canFilterConfig.FilterMaskIdLow = 0x0000;
 	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
 	canFilterConfig.FilterActivation = ENABLE;
-	canFilterConfig.BankNumber = 14;
+	canFilterConfig.BankNumber = 0;
 	if(HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig) != HAL_OK) {
 		Error_Handler();
 	}
@@ -504,7 +517,7 @@ static void MX_CAN1_Init(void)
 }
 static void MX_CAN2_Init(void)
 {
-	__HAL_RCC_CAN1_CLK_ENABLE();
+	__HAL_RCC_CAN2_CLK_ENABLE();
 	hcan2.Instance = CAN2;
 	hcan2.Init.Mode = CAN_MODE_NORMAL;
 	setCANbitRate(125, 36, &hcan2);
@@ -523,7 +536,7 @@ static void MX_CAN2_Init(void)
 		Error_Handler();
 	}
 	CAN_FilterConfTypeDef canFilterConfig;
-	canFilterConfig.FilterNumber = 0;
+	canFilterConfig.FilterNumber = 14;
 	canFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
 	canFilterConfig.FilterIdHigh = 0x0000;
@@ -532,7 +545,7 @@ static void MX_CAN2_Init(void)
 	canFilterConfig.FilterMaskIdLow = 0x0000;
 	canFilterConfig.FilterFIFOAssignment = CAN_FIFO0;
 	canFilterConfig.FilterActivation = ENABLE;
-	canFilterConfig.BankNumber = 14;
+	canFilterConfig.BankNumber = 0;
 	if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
 		Error_Handler();
 	}
@@ -584,7 +597,6 @@ static void MX_TIM1_Init(void)
 	{
 		Error_Handler();
 	}
-
 }
 /* USER CODE END 4 */
 
@@ -601,11 +613,11 @@ void Error_Handler(void)
 	do
 	{
 		printf("Error Handler\n\r");
-//		hcan1.pTxMsg->IDE = CAN_ID_STD;
-//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
-//		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
-//		hcan1.pTxMsg->DLC = 0;
-//		status = HAL_CAN_Transmit_IT(&hcan1);
+		//		hcan1.pTxMsg->IDE = CAN_ID_STD;
+		//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		//		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
+		//		hcan1.pTxMsg->DLC = 0;
+		//		status = HAL_CAN_Transmit_IT(&hcan1);
 		HAL_Delay(100);
 	} while(status != HAL_OK);
 	/* USER CODE END Error_Handler */
@@ -639,4 +651,4 @@ void assert_failed(uint8_t* file, uint32_t line)
  * @}
  */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
