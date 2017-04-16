@@ -15,7 +15,26 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
+#define _CAR 1
+
+#ifdef _CAR
+
+#define _ERRORHANDLER_CAN1TRANSMIT
+#define _REBROADCAST_ALLCELL
+
+#endif
+
+#ifndef _CAR
+
 #define _DEBUG_ON 1
+
+#ifdef _DEBUG_ON
+#define _CAN_PRINTF 1
+#endif
+
+#endif
+
+// #define _CAN_BMS_REBROADCAST 1
 
 typedef enum {
 	AllCell_Bat_State_ID = 0x0CFF2020,
@@ -41,6 +60,14 @@ typedef struct {
 	double percentCharged; // %
 	double currentCapacity; // Ahr
 } AllCell_Bat_DataDoubles;
+
+typedef struct {
+	uint16_t current;
+	uint16_t voltage;
+	uint8_t temperature;
+	uint8_t bat_percentage;
+} masterCAN1_BMS;
+
 
 typedef struct {
 	uint8_t State;
@@ -123,12 +150,14 @@ typedef enum {
 	ecoMotion_Master_BMS = 0x04,
 	ecoMotion_Humidity = 0x05,
 	ecoMotion_Temperature = 0x06,
-    ecoMotion_Throttle = 0x20,
-    ecoMotion_Master = 0x30,
-    ecoMotion_Display = 0x40,
+	ecoMotion_Throttle = 0x20,
+	ecoMotion_Master = 0x30,
+	ecoMotion_MasterBMS = 0x31,
+	ecoMotion_MasterRTC = 0x3A,
+	ecoMotion_Display = 0x40,
 	ecoMotion_Error_Throttle = 0xFFF,
 	ecoMotion_Error_Master = 0x0FEF,
-	ecoMotion_Error_Display = 0xFDF,s
+	ecoMotion_Error_Display = 0xFDF,
 } CAN_DEVICE_ID;
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan);
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan);

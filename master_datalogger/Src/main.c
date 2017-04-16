@@ -153,16 +153,26 @@ int main(void)
 
 		/* USER CODE BEGIN 3 */
 		printf("MAIN LOOP\n\r");
-		HAL_StatusTypeDef status;
-		hcan2.pTxMsg->IDE = CAN_ID_STD;
-		hcan2.pTxMsg->RTR = CAN_RTR_DATA;
-		hcan2.pTxMsg->StdId = 1;
-		hcan2.pTxMsg->DLC = 8;
 
-		status = HAL_CAN_Transmit_IT(&hcan2);
+#ifdef _REBROADCAST_ALLCELL
+		// Important Information
+		HAL_StatusTypeDef status;
+		masterCAN1_BMS masterCAN1;
+		hcan1.pTxMsg->IDE = CAN_ID_STD;
+		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		hcan1.pTxMsg->StdId = ecoMotion_MasterBMS;
+		hcan1.pTxMsg->DLC = 8;
+		masterCAN1.current = BMS_Bat_Info.Current;
+		masterCAN1.voltage = BMS_Bat_Info.Voltage;
+		masterCAN1.temperature = BMS_Bat_Info.Temp;
+		masterCAN1.bat_percentage = BMS_Bat_Status.SOC;
+
+		memcpy(hcan1.pTxMsg->Data, &masterCAN1, sizeof(masterCAN1));
+		status = HAL_CAN_Transmit_IT(&hcan1);
 		if (status != HAL_OK) {
 			Error_Handler();
 		}
+#endif
 
 		// Bat State - Need to be started
 		printf("STATE MESSAGE ---------------\n\r");
@@ -219,20 +229,23 @@ int main(void)
 
 		// Exact BMS Data as Doubles
 		printf("BMS doubles ---------------\n\r");
-		printf("Current <InfoMsg>: %lf [Amps]", bmsDataExact.currentInfoMsg);
-		printf("Voltage <InfoMsg>: %lf [Volts]", bmsDataExact.voltageInfoMsg);
-		printf("Impedance <InfoMsg>: %lf [mOhms]", bmsDataExact.impedance);
-		printf("Current <CurrentMsg>: %lf [Amps]", bmsDataExact.currentCurMsg);
-		printf("Charge Limit <CurrentMsg>: %lf [Amps]", bmsDataExact.chargeLim);
-		printf("Discharge <CurrentMsg>: %lf [Amps]", bmsDataExact.dischargeLim);
-		printf("Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.voltageVoltMsg);
-		printf("Min Cell Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.mincellVoltage);
-		printf("Max Cell Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.maxcellVoltage);
-		printf("Percent Charged <StateMsg>: %lf [%]", bmsDataExact.percentCharged);
-		printf("Current Capacity <StateMsg>: %lf [Ahr]", bmsDataExact.currentCapacity);
+		printf("Current <InfoMsg>: %f [Amps]\n\r", bmsDataExact.currentInfoMsg);
+		printf("Voltage <InfoMsg>: %f [Volts]\n\r", bmsDataExact.voltageInfoMsg);
+		printf("Impedance <InfoMsg>: %f [mOhms]\n\r", bmsDataExact.impedance);
+		printf("Current <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.currentCurMsg);
+		printf("Charge Limit <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.chargeLim);
+		printf("Discharge <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.dischargeLim);
+		printf("Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.voltageVoltMsg);
+		printf("Min Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.mincellVoltage);
+		printf("Max Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.maxcellVoltage);
+		printf("Percent Charged <StateMsg>: %f [%%]\n\r", bmsDataExact.percentCharged);
+		printf("Current Capacity <StateMsg>: %f [Ahr]\n\r", bmsDataExact.currentCapacity);
 
 		printf("\n\r");
-		HAL_Delay(100);
+
+
+
+		HAL_Delay(1000);
 
 	}
 	/* USER CODE END 3 */
@@ -338,8 +351,6 @@ static void MX_SDIO_SD_Init(void)
 
 }
 
-/* TIM1 init function */
-
 
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
@@ -369,29 +380,20 @@ static void MX_USART2_UART_Init(void)
  */
 /* USER CODE BEGIN 4 */
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
-	printf("Message Sent Successfully:");
-	printf("\n\r");
+#ifdef _CAN_PRINTF
+	printf("Message Sent Successfully on CAN%u\n\r", (hcan->Instance != CAN1)+1);
+#endif
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 
-#ifdef _DEBUG_ON
 #ifdef _CAN_PRINTF
-	printf("CAN Message Received from CAN Interface CAN");
-	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
-	printf("\n\r");
+	printf("CAN Message Received from CAN Interface CAN %u\n\r", (hcan->Instance != CAN1) + 1);
 #endif
-#endif
-	//
-	//
-	//	if (hcan->pRxMsg->StdId == 1)
-	//		printf("CAN 2 message received\n\r\n\r");
 
 	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
-
 	}
-
 
 	if (hcan->Instance == CAN2) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
@@ -489,6 +491,22 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_RTC_ID:
 		memcpy(&BMS_Bat_RTC, BMSRxMsg->Data, sizeof(BMS_Bat_RTC));
+
+#ifdef _REBROADCAST_ALLCELL
+		// Important Information
+		HAL_StatusTypeDef status;
+		hcan1.pTxMsg->IDE = CAN_ID_STD;
+		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		hcan1.pTxMsg->StdId = ecoMotion_MasterRTC;
+		hcan1.pTxMsg->DLC = 8;
+
+		memcpy(hcan1.pTxMsg->Data, &BMS_Bat_RTC, sizeof(BMS_Bat_RTC));
+		status = HAL_CAN_Transmit_IT(&hcan1);
+		if (status != HAL_OK) {
+			Error_Handler();
+		}
+#endif
+
 		BMS_Bat_RTC.Day *= _Day_Factor;
 		BMS_Bat_RTC.Second *= _Second_Factor;
 		break;
@@ -565,12 +583,15 @@ void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVa
 	*rpmVal = (clockSpeed*1.0) / (compareVal* 2.0) * 60; //revs per min
 	*speedVal = (*rpmVal * 2 * PI * wheelDiameter) / 60; //speedChan1, in m/s
 	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
+
+#ifdef _DEBUG_ON
 	printf("Revs per min: ");
 	printf(itoa(*rpmVal, str, 10));
 	printf("\n\r");
 	printf("Real Speed: ");
 	printf(itoa(*speedVal, str, 10));
 	printf("\n\r");
+#endif
 }
 static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan) {
 	uint8_t prescaleFactor = 0;
@@ -627,9 +648,13 @@ static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleType
 		break;
 	}
 }
+
+#ifdef _DEBUG_ON
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart2, &ch, 1, 1);
 }
+#endif
+
 static void MX_CAN1_Init(void)
 {
 	__HAL_RCC_CAN1_CLK_ENABLE();
@@ -701,17 +726,9 @@ static void MX_CAN2_Init(void)
 	canFilterConfig.BankNumber = 14;
 	canFilterConfig.FilterNumber = 14;
 	if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
-		printf("not ok\n\r");
 		Error_Handler();
 	}
-	//	for (int i=14; i<=27; i++) {
-	//		canFilterConfig.FilterNumber = i;
-	//		if(HAL_CAN_ConfigFilter(&hcan2, &canFilterConfig) != HAL_OK) {
-	//			Error_Handler();
-	//		}
-	//	}
 	if (HAL_CAN_Receive_IT(&hcan2, CAN_FIFO1) != HAL_OK) {
-		printf("not ok\n\r");
 		Error_Handler();
 	}
 }
@@ -788,27 +805,7 @@ static void MX_GPIO_Init(void)
 	HAL_GPIO_Init(LEDx_GPIO_Port, &GPIO_InitStruct);
 
 }
-int16_t buffer_get_int16(const uint8_t *buffer, int32_t *index) {
-	int16_t res =	((uint16_t) buffer[*index]) << 8 |
-			((uint16_t) buffer[*index + 1]);
-	*index += 2;
-	return res;
-}
 
-uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index) {
-	uint16_t res = 	((uint16_t) buffer[*index]) << 8 |
-			((uint16_t) buffer[*index + 1]);
-	*index += 2;
-	return res;
-}
-
-static inline int bcd_decimal(uint8_t hex)
-{
-	//    assert(((hex & 0xF0) >> 4) < 10);  // More significant nybble is valid
-	//    assert((hex & 0x0F) < 10);         // Less significant nybble is valid
-	int dec = ((hex & 0xF0) >> 4) * 10 + (hex & 0x0F);
-	return dec;
-}
 /* USER CODE END 4 */
 
 /**
@@ -823,12 +820,22 @@ void Error_Handler(void)
 	HAL_StatusTypeDef status;
 	do
 	{
-		printf("Error Handler\n\r");
-		//		hcan1.pTxMsg->IDE = CAN_ID_STD;
-		//		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
-		//		hcan1.pTxMsg->StdId = ecoMotion_Error_Master;
-		//		hcan1.pTxMsg->DLC = 0;
-		//		status = HAL_CAN_Transmit_IT(&hcan1);
+		hcan1.pTxMsg->IDE = CAN_ID_EXT;
+		hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+		hcan1.pTxMsg->ExtId = ecoMotion_Error_Master;
+		hcan1.pTxMsg->DLC = 0;
+
+		printf("Error Handler - Master - CAN1 ID: %x\n\r", hcan1.pTxMsg->ExtId);
+
+#ifdef _ERRORHANDLER_CAN1TRANSMIT
+		status = HAL_CAN_Transmit_IT(&hcan1);
+#endif
+
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+		for (int i = 0; i < 1000; i++) {}
+			HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+
+
 		HAL_Delay(100);
 	} while(status != HAL_OK);
 	/* USER CODE END Error_Handler */
