@@ -76,6 +76,8 @@ AllCell_Bat_Status BMS_Bat_Status;
 AllCell_Bat_PwAvailable BMS_Bat_PwAvailable;
 AllCell_Bat_RTC BMS_Bat_RTC;
 
+AllCell_Bat_DataDoubles bmsDataExact;
+
 
 static float DIAMETER = 0.50; //50 cm diameter
 static float PI = 3.1415926535; //the number pi
@@ -214,6 +216,20 @@ int main(void)
 		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
 		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
 		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+
+		// Exact BMS Data as Doubles
+		printf("BMS doubles ---------------\n\r");
+		printf("Current <InfoMsg>: %lf [Amps]", bmsDataExact.currentInfoMsg);
+		printf("Voltage <InfoMsg>: %lf [Volts]", bmsDataExact.voltageInfoMsg);
+		printf("Impedance <InfoMsg>: %lf [mOhms]", bmsDataExact.impedance);
+		printf("Current <CurrentMsg>: %lf [Amps]", bmsDataExact.currentCurMsg);
+		printf("Charge Limit <CurrentMsg>: %lf [Amps]", bmsDataExact.chargeLim);
+		printf("Discharge <CurrentMsg>: %lf [Amps]", bmsDataExact.dischargeLim);
+		printf("Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.voltageVoltMsg);
+		printf("Min Cell Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.mincellVoltage);
+		printf("Max Cell Voltage <VoltageMsg>: %lf [Volts]", bmsDataExact.maxcellVoltage);
+		printf("Percent Charged <StateMsg>: %lf [%]", bmsDataExact.percentCharged);
+		printf("Current Capacity <StateMsg>: %lf [Ahr]", bmsDataExact.currentCapacity);
 
 		printf("\n\r");
 		HAL_Delay(100);
@@ -359,9 +375,11 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 
 #ifdef _DEBUG_ON
+#ifdef _CAN_PRINTF
 	printf("CAN Message Received from CAN Interface CAN");
 	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
 	printf("\n\r");
+#endif
 #endif
 	//
 	//
@@ -414,6 +432,10 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_Info_ID:
 		memcpy(&BMS_Bat_Info, BMSRxMsg->Data, sizeof(BMS_Bat_Info));
+		bmsDataExact.voltageInfoMsg = BMS_Bat_Info.Voltage * _Voltage_Factor;
+		bmsDataExact.currentInfoMsg = BMS_Bat_Info.Current * _Current_Factor - _Current_Offset;
+		bmsDataExact.impedance  = BMS_Bat_Info.Impedance * _Impedance_Factor;
+
 		BMS_Bat_Info.Voltage *= _Voltage_Factor;
 		BMS_Bat_Info.Current = BMS_Bat_Info.Current * _Current_Factor - _Current_Offset;
 		BMS_Bat_Info.Temp -= _Temp_Offset;
@@ -422,6 +444,10 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_Current_ID:
 		memcpy(&BMS_Bat_Current, BMSRxMsg->Data, sizeof(BMS_Bat_Current));
+		bmsDataExact.currentCurMsg = BMS_Bat_Current.Current * _Current_Factor - _Current_Offset;
+		bmsDataExact.chargeLim = BMS_Bat_Current.Charge_Limit * _Current_Factor;
+		bmsDataExact.dischargeLim = BMS_Bat_Current.Discharge_Limit * _Current_Factor;
+
 		BMS_Bat_Current.Current = BMS_Bat_Current.Current * _Current_Factor - _Current_Offset;
 		BMS_Bat_Current.Charge_Limit = BMS_Bat_Current.Charge_Limit * _Current_Factor;
 		BMS_Bat_Current.Discharge_Limit = BMS_Bat_Current.Discharge_Limit * _Current_Factor;
@@ -429,6 +455,10 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_Voltage_ID:
 		memcpy(&BMS_Bat_Voltage, BMSRxMsg->Data, sizeof(BMS_Bat_Voltage));
+		bmsDataExact.voltageVoltMsg = BMS_Bat_Voltage.Voltage * _Voltage_Factor;
+		bmsDataExact.mincellVoltage = BMS_Bat_Voltage.Min_Cell_Voltage * _Voltage_Factor;
+		bmsDataExact.maxcellVoltage = BMS_Bat_Voltage.Max_Cell_Voltage * _Voltage_Factor;
+
 		BMS_Bat_Voltage.Voltage *= _Voltage_Factor;
 		BMS_Bat_Voltage.Min_Cell_Voltage *= _CellVolt_Factor;
 		BMS_Bat_Voltage.Max_Cell_Voltage *= _CellVolt_Factor;
@@ -444,6 +474,9 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_Status_ID:
 		memcpy(&BMS_Bat_Status, BMSRxMsg->Data, sizeof(BMS_Bat_Status));
+		bmsDataExact.percentCharged = BMS_Bat_Status.SOC * _SOC_Factor;
+		bmsDataExact.currentCapacity = BMS_Bat_Status.Capacity * _Capacity_Factor;
+
 		BMS_Bat_Status.SOC *= _SOC_Factor;
 		BMS_Bat_Status.Capacity *= _Capacity_Factor;
 		break;
@@ -462,8 +495,6 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	default:
 		break;
-
-
 
 	}
 }

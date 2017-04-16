@@ -15,6 +15,7 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
+#define _DEBUG_ON 1
 
 typedef enum {
 	AllCell_Bat_State_ID = 0x0CFF2020,
@@ -26,6 +27,20 @@ typedef enum {
 	AllCell_Bat_PwAvailable_ID = 0x18FF8420,
 	AllCell_Bat_RTC_ID = 0x18FFD020
 } AllCell_BMS_CAN_ID;
+
+typedef struct {
+	double currentInfoMsg; // Amps
+	double voltageInfoMsg; // Volts
+	double impedance; // mOhms
+	double currentCurMsg; // Amps
+	double chargeLim; // Amps
+	double dischargeLim; // Amps
+	double voltageVoltMsg; // Volts
+	double mincellVoltage; // Volts
+	double maxcellVoltage; // Volts
+	double percentCharged; // %
+	double currentCapacity; // Ahr
+} AllCell_Bat_DataDoubles;
 
 typedef struct {
 	uint8_t State;
