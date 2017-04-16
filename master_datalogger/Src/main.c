@@ -145,14 +145,13 @@ int main(void)
 	//  MX_TIM1_Init();
 	//MX_I2C1_Init();
 	MX_SDIO_SD_Init();
-	printf("hsd->state = %u\n\r", (uint8_t)hsd.State);
 	//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
 
 	/* USER CODE BEGIN 2 */
-	FRESULT res;                                          /* FatFs function common result code */
-	uint32_t byteswritten, bytesread;                     /* File write/read counts */
-	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
-	uint8_t rtext[100];                                   /* File read buffer */
+//	FRESULT res;                                          /* FatFs function common result code */
+//	uint32_t byteswritten, bytesread;                     /* File write/read counts */
+//	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
+//	uint8_t rtext[100];                                   /* File read buffer */
 
 	/* STM32F4xx HAL library initialization:
          - Configure the Flash prefetch, instruction and Data caches
@@ -164,104 +163,104 @@ int main(void)
 
 	/*##-1- Link the micro SD disk I/O driver ##################################*/
 	HAL_Delay(1000);
-//	printf("Level 0\n\r");
-//	if(FATFS_LinkDriver(&SD_Driver, SDPath) == 0)
-//	{
-//		/*##-2- Register the file system object to the FatFs module ##############*/
-//		//FRESULT me1 = f_mount(&SDFatFs, "", 1);
-//		FRESULT me1 = f_mount(&SDFatFs, (TCHAR const*)SDPath, 0);
-//		printf("Level 1: %u\n\r", me1);
-//		if(me1 != FR_OK)
-//		{
-//			/* FatFs Initialization Error */
-//			Error_Handler();
-//		}
-//		else
-//		{
-//			/*##-3- Create a FAT file system (format) on the logical drive #########*/
-//			/* WARNING: Formatting the uSD card will delete all content on the device */
-//
-//			FRESULT me2 = f_mkfs((TCHAR const*)SDPath, 0, 0);
-//			printf("Level 2: %u\n\r", me2);
-//			if(me2 != FR_OK)
-//			{
-//				/* FatFs Format Error */
-//				Error_Handler();
-//			}
-//			else
-//			{
-//				/*##-4- Create and Open a new text file object with write access #####*/
-//				FRESULT me3 = f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE);
-//				printf("Level 3: %u\n\r", me3);
-//
-//				if(me3 != FR_OK)
-//				{
-//					/* 'STM32.TXT' file Open for write Error */
-//					Error_Handler();
-//				}
-//				else
-//				{
-//					/*##-5- Write data to the text file ################################*/
-//					printf("Level 4\n\r");
-//					res = f_write(&MyFile, wtext, sizeof(wtext), (void *)&byteswritten);
-//
-//					if((byteswritten == 0) || (res != FR_OK))
-//					{
-//						/* 'STM32.TXT' file Write or EOF Error */
-//						Error_Handler();
-//					}
-//					else
-//					{
-//						/*##-6- Close the open text file #################################*/
-//						printf("Level 5\n\r");
-//						f_close(&MyFile);
-//
-//						/*##-7- Open the text file object with read access ###############*/
-//						if(f_open(&MyFile, "STM32.TXT", FA_READ) != FR_OK)
-//						{
-//							/* 'STM32.TXT' file Open for read Error */
-//							Error_Handler();
-//						}
-//						else
-//						{
-//							/*##-8- Read data from the text file ###########################*/
-//							printf("Level 6\n\r");
-//							res = f_read(&MyFile, rtext, sizeof(rtext), (UINT*)&bytesread);
-//
-//							if((bytesread == 0) || (res != FR_OK))
-//							{
-//								/* 'STM32.TXT' file Read or EOF Error */
-//								Error_Handler();
-//							}
-//							else
-//							{
-//								/*##-9- Close the open text file #############################*/
-//								printf("Level 7\n\r");
-//								f_close(&MyFile);
-//
-//								/*##-10- Compare read data with the expected data ############*/
-//								if((bytesread != byteswritten))
-//								{
-//									/* Read data is different from the expected data */
-//									printf("We not good\n\r");
-//									Error_Handler();
-//								}
-//								else
-//								{
-//									printf("We good\n\r");
-//									/* Success of the demo: no error occurrence */
-//
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//
-//	/*##-11- Unlink the RAM disk I/O driver ####################################*/
-//	FATFS_UnLinkDriver(SDPath);
+	//	printf("Level 0\n\r");
+	//	if(FATFS_LinkDriver(&SD_Driver, SDPath) == 0)
+	//	{
+	//		/*##-2- Register the file system object to the FatFs module ##############*/
+	//		//FRESULT me1 = f_mount(&SDFatFs, "", 1);
+	//		FRESULT me1 = f_mount(&SDFatFs, (TCHAR const*)SDPath, 0);
+	//		printf("Level 1: %u\n\r", me1);
+	//		if(me1 != FR_OK)
+	//		{
+	//			/* FatFs Initialization Error */
+	//			Error_Handler();
+	//		}
+	//		else
+	//		{
+	//			/*##-3- Create a FAT file system (format) on the logical drive #########*/
+	//			/* WARNING: Formatting the uSD card will delete all content on the device */
+	//
+	//			FRESULT me2 = f_mkfs((TCHAR const*)SDPath, 0, 0);
+	//			printf("Level 2: %u\n\r", me2);
+	//			if(me2 != FR_OK)
+	//			{
+	//				/* FatFs Format Error */
+	//				Error_Handler();
+	//			}
+	//			else
+	//			{
+	//				/*##-4- Create and Open a new text file object with write access #####*/
+	//				FRESULT me3 = f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE);
+	//				printf("Level 3: %u\n\r", me3);
+	//
+	//				if(me3 != FR_OK)
+	//				{
+	//					/* 'STM32.TXT' file Open for write Error */
+	//					Error_Handler();
+	//				}
+	//				else
+	//				{
+	//					/*##-5- Write data to the text file ################################*/
+	//					printf("Level 4\n\r");
+	//					res = f_write(&MyFile, wtext, sizeof(wtext), (void *)&byteswritten);
+	//
+	//					if((byteswritten == 0) || (res != FR_OK))
+	//					{
+	//						/* 'STM32.TXT' file Write or EOF Error */
+	//						Error_Handler();
+	//					}
+	//					else
+	//					{
+	//						/*##-6- Close the open text file #################################*/
+	//						printf("Level 5\n\r");
+	//						f_close(&MyFile);
+	//
+	//						/*##-7- Open the text file object with read access ###############*/
+	//						if(f_open(&MyFile, "STM32.TXT", FA_READ) != FR_OK)
+	//						{
+	//							/* 'STM32.TXT' file Open for read Error */
+	//							Error_Handler();
+	//						}
+	//						else
+	//						{
+	//							/*##-8- Read data from the text file ###########################*/
+	//							printf("Level 6\n\r");
+	//							res = f_read(&MyFile, rtext, sizeof(rtext), (UINT*)&bytesread);
+	//
+	//							if((bytesread == 0) || (res != FR_OK))
+	//							{
+	//								/* 'STM32.TXT' file Read or EOF Error */
+	//								Error_Handler();
+	//							}
+	//							else
+	//							{
+	//								/*##-9- Close the open text file #############################*/
+	//								printf("Level 7\n\r");
+	//								f_close(&MyFile);
+	//
+	//								/*##-10- Compare read data with the expected data ############*/
+	//								if((bytesread != byteswritten))
+	//								{
+	//									/* Read data is different from the expected data */
+	//									printf("We not good\n\r");
+	//									Error_Handler();
+	//								}
+	//								else
+	//								{
+	//									printf("We good\n\r");
+	//									/* Success of the demo: no error occurrence */
+	//
+	//								}
+	//							}
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//
+	//	/*##-11- Unlink the RAM disk I/O driver ####################################*/
+	//	FATFS_UnLinkDriver(SDPath);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -274,23 +273,38 @@ int main(void)
 
 		/* USER CODE BEGIN 3 */
 		printf("MAIN LOOP\n\r");
+		printf("hsd->state = %u\n\r", (uint8_t)hsd.State);
 		HAL_StatusTypeDef SD_Error;
 		uint8_t SD_ReadBuf[1000];
-		//HAL_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint8_t *pData, uint32_t BlockAdd, uint32_t NumberOfBlocks, uint32_t Timeout)
-		SD_Error = HAL_SD_ReadBlocks(&hsd, SD_ReadBuf, 0x10, 1, 1000);
-		printf("HAL Error Code = %d\n\r", SD_Error);
-		printf("SD Error Code = %lx\n\r", hsd.ErrorCode);
 
-		HAL_SD_CardInfoTypeDef hsd_Info;
-		SD_Error = HAL_SD_GetCardInfo(&hsd, &hsd_Info);
+		//HAL_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint8_t *pData, uint32_t BlockAdd, uint32_t NumberOfBlocks, uint32_t Timeout)
+//		SD_Error = HAL_SD_ReadBlocks(&hsd, SD_ReadBuf, 5, 1, 1000);
+//		printf("HAL Error Code = %d\n\r", SD_Error);
+//		printf("SD Error Code = %lx\n\r", hsd.ErrorCode);
+
+		printf("\n\rCard Info\n\r");
+		HAL_SD_CardInfoTypeDef hsd_CardInfo;
+		SD_Error = HAL_SD_GetCardInfo(&hsd, &hsd_CardInfo);
 		if (SD_Error != HAL_OK) {
 			printf("Cannot get SD Info\n\r");
 		}
 		else {
-			printf("CardType: %lu\n\r",hsd_Info.CardType);
-			printf("CardVersion: %lu\n\r",hsd_Info.CardVersion);
-			printf("Class: %lu\n\r",hsd_Info.Class);
+			printf("CardType: %lu\n\r",hsd_CardInfo.CardType);
+			printf("CardVersion: %lu\n\r",hsd_CardInfo.CardVersion);
+			printf("Class: %lu\n\r",hsd_CardInfo.Class);
 		}
+		printf("\n\rCard Status\n\r");
+		HAL_SD_CardStatusTypeDef hsd_CardStatus;
+		SD_Error = HAL_SD_GetCardStatus(&hsd, &hsd_CardStatus);
+		if (SD_Error != HAL_OK) {
+			printf("Cannot get SD Status\n\r");
+			printf("hsd->ErrorCode = %lx\n\r", hsd.ErrorCode);
+		}
+		else {
+			printf("SpeedClass: %u\n\r",hsd_CardStatus.SpeedClass);
+		}
+
+		printf("\n\r");
 
 
 		//		HAL_StatusTypeDef status;

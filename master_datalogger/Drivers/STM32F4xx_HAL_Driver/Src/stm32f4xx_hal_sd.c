@@ -334,7 +334,8 @@ HAL_StatusTypeDef HAL_SD_Init(SD_HandleTypeDef *hsd)
 	hsd->State = HAL_SD_STATE_BUSY;
 
 	/* Initialize the Card parameters */
-	HAL_SD_InitCard(hsd);
+	if (HAL_SD_InitCard(hsd) != HAL_OK)
+		return HAL_ERROR;
 
 	/* Initialize the error code */
 	hsd->ErrorCode = HAL_DMA_ERROR_NONE;
@@ -386,6 +387,7 @@ HAL_StatusTypeDef HAL_SD_InitCard(SD_HandleTypeDef *hsd)
 
 	/* Identify card operating voltage */
 	errorstate = SD_PowerON(hsd);
+	printf("SD_InitCard, errorstate = %lx\n\r", errorstate);
 	if(errorstate != HAL_SD_ERROR_NONE)
 	{
 		hsd->State = HAL_SD_STATE_READY;
@@ -517,7 +519,9 @@ HAL_StatusTypeDef HAL_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint8_t *pData, uint3
 
 		if((BlockAdd + NumberOfBlocks) > (hsd->SdCard.LogBlockNbr))
 		{
-			printf("BAD\n\r");
+			printf("HAL_SD_ReadBlocks, BlockAdd = %u\n\r", BlockAdd);
+			printf("HAL_SD_ReadBlocks, NumberOfBlocks = %u\n\r", NumberOfBlocks);
+			printf("HAL_SD_ReadBlocks, SdCard.LogBlockNbr = %u\n\r", hsd->SdCard.BlockNbr);
 			hsd->ErrorCode |= HAL_SD_ERROR_ADDR_OUT_OF_RANGE;
 
 			return HAL_ERROR;
@@ -2543,6 +2547,7 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 	uint32_t response = 0U, validvoltage = 0U;
 	uint32_t errorstate = HAL_SD_ERROR_NONE;
 
+
 	/* CMD0: GO_IDLE_STATE */
 	errorstate = SDMMC_CmdGoIdleState(hsd->Instance);
 	if(errorstate != HAL_SD_ERROR_NONE)
@@ -2550,8 +2555,10 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 		return errorstate;
 	}
 
+
 	/* CMD8: SEND_IF_COND: Command available only on V2.0 cards */
 	errorstate = SDMMC_CmdOperCond(hsd->Instance);
+
 	if(errorstate != HAL_SD_ERROR_NONE)
 	{
 		hsd->SdCard.CardVersion = CARD_V1_X;
@@ -2565,6 +2572,7 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 			}
 
 			/* SEND CMD55 APP_CMD with RCA as 0 */
+
 			errorstate = SDMMC_CmdAppCommand(hsd->Instance, 0U);
 			if(errorstate != HAL_SD_ERROR_NONE)
 			{
@@ -2594,13 +2602,16 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 		/* Send ACMD41 SD_APP_OP_COND with Argument 0x80100000 */
 		while(validvoltage == 0U)
 		{
+
 			if(count++ == SDMMC_MAX_VOLT_TRIAL)
 			{
 				return HAL_SD_ERROR_INVALID_VOLTRANGE;
 			}
 
+
 			/* SEND CMD55 APP_CMD with RCA as 0 */
 			errorstate = SDMMC_CmdAppCommand(hsd->Instance, 0U);
+			printf("SD_PowerON, errorstate = %lx\n\r",errorstate);
 			if(errorstate != HAL_SD_ERROR_NONE)
 			{
 				return errorstate;
@@ -2608,6 +2619,7 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 
 			/* Send CMD41 */
 			errorstate = SDMMC_CmdAppOperCommand(hsd->Instance, SDMMC_HIGH_CAPACITY);
+			printf("SD_PowerON, errorstate = %lx\n\r",errorstate);
 			if(errorstate != HAL_SD_ERROR_NONE)
 			{
 				return errorstate;
@@ -2615,6 +2627,9 @@ static uint32_t SD_PowerON(SD_HandleTypeDef *hsd)
 
 			/* Get command response */
 			response = SDIO_GetResponse(hsd->Instance, SDIO_RESP1);
+
+
+
 
 			/* Get operating voltage*/
 			validvoltage = (((response >> 31U) == 1U) ? 1U : 0U);

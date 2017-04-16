@@ -892,6 +892,7 @@ uint32_t SDMMC_CmdAppCommand(SDIO_TypeDef *SDIOx, uint32_t Argument)
   it is a SD card: SD card 2.0 (voltage range mismatch)
      or SD card 1.x */
   errorstate = SDMMC_GetCmdResp1(SDIOx, SDMMC_CMD_APP_CMD, SDIO_CMDTIMEOUT);
+  printf("SDMMC_CmdAppCommand, errorstate = %lx\n\r",errorstate);
 
   return errorstate;
 }
