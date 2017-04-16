@@ -145,7 +145,7 @@ int main(void)
 	//  MX_TIM1_Init();
 	//MX_I2C1_Init();
 	MX_SDIO_SD_Init();
-	printf("hsd->state = %u\n\r",hsd.State);
+	printf("hsd->state = %u\n\r", (uint8_t)hsd.State);
 	//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
 
 	/* USER CODE BEGIN 2 */
@@ -280,6 +280,19 @@ int main(void)
 		SD_Error = HAL_SD_ReadBlocks(&hsd, SD_ReadBuf, 0x10, 1, 1000);
 		printf("HAL Error Code = %d\n\r", SD_Error);
 		printf("SD Error Code = %lx\n\r", hsd.ErrorCode);
+
+		HAL_SD_CardInfoTypeDef hsd_Info;
+		SD_Error = HAL_SD_GetCardInfo(&hsd, &hsd_Info);
+		if (SD_Error != HAL_OK) {
+			printf("Cannot get SD Info\n\r");
+		}
+		else {
+			printf("CardType: %lu\n\r",hsd_Info.CardType);
+			printf("CardVersion: %lu\n\r",hsd_Info.CardVersion);
+			printf("Class: %lu\n\r",hsd_Info.Class);
+		}
+
+
 		//		HAL_StatusTypeDef status;
 		//		hcan2.pTxMsg->IDE = CAN_ID_STD;
 		//		hcan2.pTxMsg->RTR = CAN_RTR_DATA;
