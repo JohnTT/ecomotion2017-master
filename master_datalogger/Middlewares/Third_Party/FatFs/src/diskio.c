@@ -117,8 +117,9 @@ DRESULT disk_read (
 )
 {
   DRESULT res;
- 
+
   res = disk.drv[pdrv]->disk_read(disk.lun[pdrv], buff, sector, count);
+  printf("disk read, res: %u\n\r",res);
   return res;
 }
 
@@ -160,7 +161,7 @@ DRESULT disk_ioctl (
 )
 {
   DRESULT res;
-
+  printf("disk_ioctl: res = %u\n\r", res);
   res = disk.drv[pdrv]->disk_ioctl(disk.lun[pdrv], cmd, buff);
   return res;
 }

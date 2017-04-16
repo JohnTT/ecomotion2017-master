@@ -1,45 +1,45 @@
 /**
-  ******************************************************************************
-  * File Name          : main.c
-  * Description        : Main program body
-  ******************************************************************************
-  *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : main.c
+ * Description        : Main program body
+ ******************************************************************************
+ *
+ * Copyright (c) 2017 STMicroelectronics International N.V.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted, provided that the following conditions are met:
+ *
+ * 1. Redistribution of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. Neither the name of STMicroelectronics nor the names of other
+ *    contributors to this software may be used to endorse or promote products
+ *    derived from this software without specific written permission.
+ * 4. This software, including modifications and/or derivative works of this
+ *    software, must execute solely and exclusively on microcontroller or
+ *    microprocessor devices manufactured by or for STMicroelectronics.
+ * 5. Redistribution and use of this software other than as permitted under
+ *    this license is void and will automatically terminate your rights under
+ *    this license.
+ *
+ * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
+ * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT
+ * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ ******************************************************************************
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
@@ -67,6 +67,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+
 AllCell_Bat_State BMS_Bat_State;
 AllCell_Bat_Info BMS_Bat_Info;
 AllCell_Bat_Current BMS_Bat_Current;
@@ -143,7 +145,8 @@ int main(void)
 	//  MX_TIM1_Init();
 	//MX_I2C1_Init();
 	MX_SDIO_SD_Init();
-//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
+	printf("hsd->state = %u\n\r",hsd.State);
+	//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
 
 	/* USER CODE BEGIN 2 */
 	FRESULT res;                                          /* FatFs function common result code */
@@ -161,112 +164,122 @@ int main(void)
 
 	/*##-1- Link the micro SD disk I/O driver ##################################*/
 	HAL_Delay(1000);
-	printf("Level 0\n\r");
-	if(FATFS_LinkDriver(&SD_Driver, SDPath) == 0)
-	{
-		/*##-2- Register the file system object to the FatFs module ##############*/
-		printf("Level 1\n\r");
-		printf("%s\n\r", SDPath);
-		if(f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
-		{
-			/* FatFs Initialization Error */
-			Error_Handler();
-		}
-		else
-		{
-			/*##-3- Create a FAT file system (format) on the logical drive #########*/
-			/* WARNING: Formatting the uSD card will delete all content on the device */
-//			printf("Level 2\n\r");
-//			if(f_mkfs((TCHAR const*)SDPath, 0, 0) != FR_OK)
+//	printf("Level 0\n\r");
+//	if(FATFS_LinkDriver(&SD_Driver, SDPath) == 0)
+//	{
+//		/*##-2- Register the file system object to the FatFs module ##############*/
+//		//FRESULT me1 = f_mount(&SDFatFs, "", 1);
+//		FRESULT me1 = f_mount(&SDFatFs, (TCHAR const*)SDPath, 0);
+//		printf("Level 1: %u\n\r", me1);
+//		if(me1 != FR_OK)
+//		{
+//			/* FatFs Initialization Error */
+//			Error_Handler();
+//		}
+//		else
+//		{
+//			/*##-3- Create a FAT file system (format) on the logical drive #########*/
+//			/* WARNING: Formatting the uSD card will delete all content on the device */
+//
+//			FRESULT me2 = f_mkfs((TCHAR const*)SDPath, 0, 0);
+//			printf("Level 2: %u\n\r", me2);
+//			if(me2 != FR_OK)
 //			{
 //				/* FatFs Format Error */
 //				Error_Handler();
 //			}
 //			else
-			{
-				/*##-4- Create and Open a new text file object with write access #####*/
-				printf("Level 3\n\r");
-				FRESULT me = f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE);
-				printf("%d\n\r", me);
-				if(me != FR_OK)
-				{
-					/* 'STM32.TXT' file Open for write Error */
-					Error_Handler();
-				}
-				else
-				{
-					/*##-5- Write data to the text file ################################*/
-					printf("Level 4\n\r");
-					res = f_write(&MyFile, wtext, sizeof(wtext), (void *)&byteswritten);
+//			{
+//				/*##-4- Create and Open a new text file object with write access #####*/
+//				FRESULT me3 = f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE);
+//				printf("Level 3: %u\n\r", me3);
+//
+//				if(me3 != FR_OK)
+//				{
+//					/* 'STM32.TXT' file Open for write Error */
+//					Error_Handler();
+//				}
+//				else
+//				{
+//					/*##-5- Write data to the text file ################################*/
+//					printf("Level 4\n\r");
+//					res = f_write(&MyFile, wtext, sizeof(wtext), (void *)&byteswritten);
+//
+//					if((byteswritten == 0) || (res != FR_OK))
+//					{
+//						/* 'STM32.TXT' file Write or EOF Error */
+//						Error_Handler();
+//					}
+//					else
+//					{
+//						/*##-6- Close the open text file #################################*/
+//						printf("Level 5\n\r");
+//						f_close(&MyFile);
+//
+//						/*##-7- Open the text file object with read access ###############*/
+//						if(f_open(&MyFile, "STM32.TXT", FA_READ) != FR_OK)
+//						{
+//							/* 'STM32.TXT' file Open for read Error */
+//							Error_Handler();
+//						}
+//						else
+//						{
+//							/*##-8- Read data from the text file ###########################*/
+//							printf("Level 6\n\r");
+//							res = f_read(&MyFile, rtext, sizeof(rtext), (UINT*)&bytesread);
+//
+//							if((bytesread == 0) || (res != FR_OK))
+//							{
+//								/* 'STM32.TXT' file Read or EOF Error */
+//								Error_Handler();
+//							}
+//							else
+//							{
+//								/*##-9- Close the open text file #############################*/
+//								printf("Level 7\n\r");
+//								f_close(&MyFile);
+//
+//								/*##-10- Compare read data with the expected data ############*/
+//								if((bytesread != byteswritten))
+//								{
+//									/* Read data is different from the expected data */
+//									printf("We not good\n\r");
+//									Error_Handler();
+//								}
+//								else
+//								{
+//									printf("We good\n\r");
+//									/* Success of the demo: no error occurrence */
+//
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	/*##-11- Unlink the RAM disk I/O driver ####################################*/
+//	FATFS_UnLinkDriver(SDPath);
+	/* USER CODE END 2 */
 
-					if((byteswritten == 0) || (res != FR_OK))
-					{
-						/* 'STM32.TXT' file Write or EOF Error */
-						Error_Handler();
-					}
-					else
-					{
-						/*##-6- Close the open text file #################################*/
-						printf("Level 5\n\r");
-						f_close(&MyFile);
-
-						/*##-7- Open the text file object with read access ###############*/
-						if(f_open(&MyFile, "STM32.TXT", FA_READ) != FR_OK)
-						{
-							/* 'STM32.TXT' file Open for read Error */
-							Error_Handler();
-						}
-						else
-						{
-							/*##-8- Read data from the text file ###########################*/
-							printf("Level 6\n\r");
-							res = f_read(&MyFile, rtext, sizeof(rtext), (UINT*)&bytesread);
-
-							if((bytesread == 0) || (res != FR_OK))
-							{
-								/* 'STM32.TXT' file Read or EOF Error */
-								Error_Handler();
-							}
-							else
-							{
-								/*##-9- Close the open text file #############################*/
-								printf("Level 7\n\r");
-								f_close(&MyFile);
-
-								/*##-10- Compare read data with the expected data ############*/
-								if((bytesread != byteswritten))
-								{
-									/* Read data is different from the expected data */
-									printf("We not good\n\r");
-									Error_Handler();
-								}
-								else
-								{
-									printf("We good\n\r");
-									/* Success of the demo: no error occurrence */
-
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-    /*##-11- Unlink the RAM disk I/O driver ####################################*/
-    FATFS_UnLinkDriver(SDPath);
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
 	HAL_Delay(1000);
 	while (1)
 	{
-  /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+		/* USER CODE END WHILE */
+
+		/* USER CODE BEGIN 3 */
 		printf("MAIN LOOP\n\r");
+		HAL_StatusTypeDef SD_Error;
+		uint8_t SD_ReadBuf[1000];
+		//HAL_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint8_t *pData, uint32_t BlockAdd, uint32_t NumberOfBlocks, uint32_t Timeout)
+		SD_Error = HAL_SD_ReadBlocks(&hsd, SD_ReadBuf, 0x10, 1, 1000);
+		printf("HAL Error Code = %d\n\r", SD_Error);
+		printf("SD Error Code = %lx\n\r", hsd.ErrorCode);
 		//		HAL_StatusTypeDef status;
 		//		hcan2.pTxMsg->IDE = CAN_ID_STD;
 		//		hcan2.pTxMsg->RTR = CAN_RTR_DATA;
@@ -277,135 +290,121 @@ int main(void)
 		//		if (status != HAL_OK) {
 		//			Error_Handler();
 		//		}
-//		printf("Current: %u\n\r", BMS_Bat_Info.Current);
-//		printf("Voltage: %u\n\r", BMS_Bat_Info.Voltage);
-//		printf("Temperature: %u\n\r", BMS_Bat_Info.Temp);
-//		printf("Charge Limit: %u\n\r", BMS_Bat_Current.Charge_Limit);
-//		printf("Disharge Limit: %u\n\r", BMS_Bat_Current.Discharge_Limit);
-//		printf("PwAvailableCharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge%10000);
-//		printf("PwAvailableDisharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Disharge%10000);
-//
-//		printf("Nb Min Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
-//		printf("Nb Max Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
-//		printf("Cell Min Voltage: %u\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
-//		printf("Cell Max Voltage: %u\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
-//
-//		printf("Avg Cell Temp: %u\n\r", BMS_Bat_Temperature.Avg_Cell_Temp);
-//		printf("Temp BMS: %u\n\r", BMS_Bat_Temperature.Temp_BMS);
-//
-//		printf("Year: %u\n\r", BMS_Bat_RTC.Year);
-//		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
-//		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
-//		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
-//		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
-//		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
-//		//printf("Temperature: %u\n\r", BMS_Bat_Info.Temp)
-//		printf("\n\r");
-//		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
-//		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+		//		printf("Current: %u\n\r", BMS_Bat_Info.Current);
+		//		printf("Voltage: %u\n\r", BMS_Bat_Info.Voltage);
+		//		printf("Temperature: %u\n\r", BMS_Bat_Info.Temp);
+		//		printf("Charge Limit: %u\n\r", BMS_Bat_Current.Charge_Limit);
+		//		printf("Disharge Limit: %u\n\r", BMS_Bat_Current.Discharge_Limit);
+		//		printf("PwAvailableCharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge%10000);
+		//		printf("PwAvailableDisharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Disharge%10000);
+		//
+		//		printf("Nb Min Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
+		//		printf("Nb Max Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
+		//		printf("Cell Min Voltage: %u\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
+		//		printf("Cell Max Voltage: %u\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
+		//
+		//		printf("Avg Cell Temp: %u\n\r", BMS_Bat_Temperature.Avg_Cell_Temp);
+		//		printf("Temp BMS: %u\n\r", BMS_Bat_Temperature.Temp_BMS);
+		//
+		//		printf("Year: %u\n\r", BMS_Bat_RTC.Year);
+		//		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
+		//		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
+		//		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
+		//		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
+		//		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+		//		//printf("Temperature: %u\n\r", BMS_Bat_Info.Temp)
+		//		printf("\n\r");
+		//		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
+		//		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 		HAL_Delay(1000);
 
 	}
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 
 }
 
 /** System Clock Configuration
-*/
+ */
 void SystemClock_Config(void)
 {
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
-    /**Configure the main internal regulator output voltage 
-    */
-  __HAL_RCC_PWR_CLK_ENABLE();
+	/**Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
 
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 72;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	/**Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLM = 4;
+	RCC_OscInitStruct.PLL.PLLN = 72;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 3;
+	RCC_OscInitStruct.PLL.PLLR = 2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+	/**Initializes the CPU, AHB and APB busses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SDIO|RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ;
-  PeriphClkInitStruct.SdioClockSelection = RCC_SDIOCLKSOURCE_CLK48;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SDIO|RCC_PERIPHCLK_CLK48;
+	PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ;
+	PeriphClkInitStruct.SdioClockSelection = RCC_SDIOCLKSOURCE_CLK48;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+	/**Configure the Systick interrupt time
+	 */
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
-    /**Configure the Systick 
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+	/**Configure the Systick
+	 */
+	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+	/* SysTick_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
 /* I2C1 init function */
 static void MX_I2C1_Init(void)
 {
 
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-}
-
-/* SDIO init function */
-static void MX_SDIO_SD_Init(void)
-{
-
-  hsd.Instance = SDIO;
-  hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
-  hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
-  hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
-  hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
-  hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 0;
+	hi2c1.Instance = I2C1;
+	hi2c1.Init.ClockSpeed = 100000;
+	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hi2c1.Init.OwnAddress1 = 0;
+	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hi2c1.Init.OwnAddress2 = 0;
+	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
 }
 
@@ -416,41 +415,41 @@ static void MX_SDIO_SD_Init(void)
 static void MX_USART2_UART_Init(void)
 {
 
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	huart2.Instance = USART2;
+	huart2.Init.BaudRate = 38400;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX_RX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	if (HAL_UART_Init(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
 }
 
 /** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
+ * Analog
+ * Input
+ * Output
+ * EVENT_OUT
+ * EXTI
+ */
 /* USER CODE BEGIN 4 */
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("Message Sent Successfully:");
 	printf("\n\r");
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
-//	printf("CAN Message Received from CAN Interface CAN");
-//	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
-//	printf("\n\r");
-//
-//
-//	if (hcan->pRxMsg->StdId == 1)
-//		printf("CAN 2 message received\n\r\n\r");
+	//	printf("CAN Message Received from CAN Interface CAN");
+	//	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
+	//	printf("\n\r");
+	//
+	//
+	//	if (hcan->pRxMsg->StdId == 1)
+	//		printf("CAN 2 message received\n\r\n\r");
 
 	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
@@ -778,54 +777,77 @@ static void MX_TIM1_Init(void)
 static void MX_GPIO_Init(void)
 {
 
-    GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOH_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-    /*Configure GPIO pin : LD2_Pin */
-    GPIO_InitStruct.Pin = LD2_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : LD2_Pin */
+	GPIO_InitStruct.Pin = LD2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = LED0_Pin | LED1_Pin | LED2_Pin | LED3_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(LEDx_GPIO_Port, &GPIO_InitStruct);
+	GPIO_InitStruct.Pin = LED0_Pin | LED1_Pin | LED2_Pin | LED3_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LEDx_GPIO_Port, &GPIO_InitStruct);
 
 }
+
+/* SDIO init function */
+static void MX_SDIO_SD_Init(void)
+{
+	//_HAL_RCC_SDIO_CLK_ENABLE();
+	hsd.Instance = SDIO;
+	hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
+	hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
+	hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
+	hsd.Init.BusWide = SDIO_BUS_WIDE_4B;
+	hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+	hsd.Init.ClockDiv = 0;
+
+	HAL_StatusTypeDef SDstatus = HAL_SD_Init(&hsd);
+	//printf("SDStatus == HAL_OK = %u\n\r", SDstatus == HAL_OK);
+	//SDstatus = HAL_SD_ConfigWideBusOperation(&hsd, SDIO_BUS_WIDE_4B);
+	if (SDstatus != HAL_OK)
+	{
+		printf("HAL failed to init SD = %u\n\r", (uint8_t)SDstatus);
+		Error_Handler();
+	}
+}
+
 int16_t buffer_get_int16(const uint8_t *buffer, int32_t *index) {
 	int16_t res =	((uint16_t) buffer[*index]) << 8 |
-					((uint16_t) buffer[*index + 1]);
+			((uint16_t) buffer[*index + 1]);
 	*index += 2;
 	return res;
 }
 
 uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index) {
 	uint16_t res = 	((uint16_t) buffer[*index]) << 8 |
-					((uint16_t) buffer[*index + 1]);
+			((uint16_t) buffer[*index + 1]);
 	*index += 2;
 	return res;
 }
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @param  None
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @param  None
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler */
+	/* USER CODE BEGIN Error_Handler */
 	/* User can add his own implementation to report the HAL error return state */
 	HAL_StatusTypeDef status;
 	do
@@ -838,35 +860,35 @@ void Error_Handler(void)
 		//		status = HAL_CAN_Transmit_IT(&hcan1);
 		HAL_Delay(100);
 	} while(status != HAL_OK);
-  /* USER CODE END Error_Handler */ 
+	/* USER CODE END Error_Handler */
 }
 
 #ifdef USE_FULL_ASSERT
 
 /**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
+ * @brief Reports the name of the source file and the source line number
+ * where the assert_param error has occurred.
+ * @param file: pointer to the source file name
+ * @param line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
+	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE END 6 */
 
 }
 
 #endif
 
 /**
-  * @}
-  */ 
+ * @}
+ */
 
 /**
-  * @}
-*/ 
+ * @}
+ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -2325,6 +2325,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	/* Find an FAT partition on the drive. Supports only generic partitioning, FDISK and SFD. */
 	bsect = 0;
 	fmt = check_fs(fs, bsect);					/* Load sector 0 and check if it is an FAT boot sector as SFD */
+	printf("find_volume, fmt = %u\n\r",(uint8_t)fmt);
 	if (fmt == 1 || (!fmt && (LD2PT(vol)))) {	/* Not an FAT boot sector or forced partition number */
 		for (i = 0; i < 4; i++) {			/* Get partition offset */
 			pt = fs->win.d8 + MBR_Table + i * SZ_PTE;
@@ -2543,6 +2544,7 @@ FRESULT f_open (
 
 	/* Get logical drive number */
 #if !_FS_READONLY
+	printf("Not ReadOnly\n\r");
 	mode &= FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_OPEN_ALWAYS | FA_CREATE_NEW;
 	res = find_volume(&dj.fs, &path, (BYTE)(mode & ~FA_READ));
 #else
@@ -4179,21 +4181,22 @@ FRESULT f_mkfs (
 
 	pdrv = LD2PD(vol);	/* Physical drive */
 	part = LD2PT(vol);	/* Partition (0:auto detect, 1-4:get from partition table)*/
-	printf("%i\n\r", vol);
-    printf("%u\n\r", (uint8_t)part);
 
 	/* Get disk statics */
 	stat = disk_initialize(pdrv);
-	printf("%i\n\r", stat);
 	if (stat & STA_NOINIT) return FR_NOT_READY;
+
+	printf("f_mkfs, Further than Liam\n\r");
 	if (stat & STA_PROTECT) return FR_WRITE_PROTECTED;
 #if _MAX_SS != _MIN_SS		/* Get disk sector size */
 	if (disk_ioctl(pdrv, GET_SECTOR_SIZE, &SS(fs)) != RES_OK || SS(fs) > _MAX_SS || SS(fs) < _MIN_SS)
 		return FR_DISK_ERR;
 #endif
+	printf("f_mkfs, got disk sector size\n\r");
 	if (_MULTI_PARTITION && part) {
 		/* Get partition information from partition table in the MBR */
 		if (disk_read(pdrv, fs->win.d8, 0, 1) != RES_OK) return FR_DISK_ERR;
+		printf("f_mkfs, got partition info from MBR\n\r");
 		if (LD_WORD(fs->win.d8 + BS_55AA) != 0xAA55) return FR_MKFS_ABORTED;
 		tbl = &fs->win.d8[MBR_Table + (part - 1) * SZ_PTE];
 		if (!tbl[4]) return FR_MKFS_ABORTED;	/* No partition? */
@@ -4201,8 +4204,12 @@ FRESULT f_mkfs (
 		n_vol = LD_DWORD(tbl + 12);	/* Volume size */
 	} else {
 		/* Create a partition in this function */
-		if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &n_vol) != RES_OK || n_vol < 128)
+		printf("f_mkfs, try make partition\n\r");
+		if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &n_vol) != RES_OK || n_vol < 128) {
+			printf("f_mkfs, n_vol = %u\n\r", n_vol);
 			return FR_DISK_ERR;
+		}
+		printf("f_mkfs, can make partition\n\r");
 		b_vol = (sfd) ? 0 : 63;		/* Volume start sector */
 		n_vol -= b_vol;				/* Volume size */
 	}
