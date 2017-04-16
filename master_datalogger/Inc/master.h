@@ -14,6 +14,8 @@
  * Use this function to parse CAN byte stream into structures.
  * memcpy(&parsedData, data, sizeof(data));
  */
+
+
 typedef enum {
 	AllCell_Bat_State_ID = 0x0CFF2020,
 	AllCell_Bat_Info_ID = 0x0CFF2120,
@@ -34,10 +36,10 @@ typedef struct {
 } AllCell_Bat_State;
 
 typedef struct {
-	uint16_t Current;
-	uint16_t Voltage;
-	uint8_t Temp;
-	uint16_t Impedance;
+	uint16_t Current; // Amps
+	uint16_t Voltage; // Volts
+	uint8_t Temp; // Celsius
+	uint16_t Impedance; // mOhms
 } AllCell_Bat_Info;
 
 typedef struct {
@@ -72,7 +74,7 @@ typedef struct {
 
 typedef struct {
 	uint32_t PwAvailable_Charge;
-	uint32_t PwAvailable_Disharge;
+	uint32_t PwAvailable_Discharge;
 } AllCell_Bat_PwAvailable;
 
 typedef struct {
@@ -125,5 +127,6 @@ uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index);
 char *itoa (int value, char *result, int base);
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal);
 void __io_putchar(uint8_t ch);
+static inline int bcd_decimal(uint8_t hex);
 
 #endif /* MASTER_H_ */

@@ -161,30 +161,61 @@ int main(void)
 		if (status != HAL_OK) {
 			Error_Handler();
 		}
-//		printf("Current: %u\n\r", BMS_Bat_Info.Current);
-//		printf("Voltage: %u\n\r", BMS_Bat_Info.Voltage);
-//		printf("Temperature: %u\n\r", BMS_Bat_Info.Temp);
-//		printf("Charge Limit: %u\n\r", BMS_Bat_Current.Charge_Limit);
-//		printf("Disharge Limit: %u\n\r", BMS_Bat_Current.Discharge_Limit);
-//		printf("PwAvailableCharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge%10000);
-//		printf("PwAvailableDisharge: %u\n\r", BMS_Bat_PwAvailable.PwAvailable_Disharge%10000);
-//
-//		printf("Nb Min Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
-//		printf("Nb Max Voltage: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
-//		printf("Cell Min Voltage: %u\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
-//		printf("Cell Max Voltage: %u\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
-//
-//		printf("Avg Cell Temp: %u\n\r", BMS_Bat_Temperature.Avg_Cell_Temp);
-//		printf("Temp BMS: %u\n\r", BMS_Bat_Temperature.Temp_BMS);
-//
-//		printf("Year: %u\n\r", BMS_Bat_RTC.Year);
-//		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
-//		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
-//		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
-//		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
-//		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
-//		//printf("Temperature: %u\n\r", BMS_Bat_Info.Temp)
-//		printf("\n\r");
+
+		// Bat State - Need to be started
+		printf("STATE MESSAGE ---------------\n\r");
+		printf("Number of Power Cycles: %u\n\r", BMS_Bat_State.Reset);
+
+		// Bat Info Message
+		printf("INFO MESSAGE ---------------\n\r");
+		printf("Current: %u Amps\n\r", BMS_Bat_Info.Current);
+		printf("Voltage: %u Volts\n\r", BMS_Bat_Info.Voltage);
+		printf("Temperature: %u deg Celsius\n\r", BMS_Bat_Info.Temp);
+		printf("Impedance: %u mOhm\n\r", BMS_Bat_Info.Impedance);
+
+		// Bat Current Message
+		printf("CURRENT MESSAGE ---------------\n\r");
+		printf("Current: %u Amps\n\r", BMS_Bat_Current.Current);
+		printf("Charge Limit: %u Amps\n\r", BMS_Bat_Current.Charge_Limit);
+		printf("Disharge Limit: %u Amps\n\r", BMS_Bat_Current.Discharge_Limit);
+
+		// Voltage Message
+		printf("VOLTAGE MESSAGE ---------------\n\r");
+		printf("Voltage: %u Volts\n\r", BMS_Bat_Voltage.Voltage);
+		printf("Min Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
+		printf("Min Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
+		printf("Max Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
+		printf("Max Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
+
+		// Temp Message
+		printf("TEMP MESSAGE ---------------\n\r");
+		printf("BMS Temperature: %u deg Celsius\n\r", BMS_Bat_Temperature.Temp_BMS);
+		printf("Min Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Min_Cell_Temp);
+		printf("Min Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Min_Temp);
+		printf("Max Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Max_Cell_Temp);
+		printf("Max Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Max_Temp);
+
+		// Status Message
+		printf("STATUS MESSAGE ---------------\n\r");
+		printf("State of Charge: %u %%\n\r", BMS_Bat_Status.SOC);
+		printf("Current Capacity: %u Ahr\n\r", BMS_Bat_Status.Capacity);
+
+		// Power Available Message
+		printf("POWER AVAILABLE MESSAGE ---------------\n\r");
+		printf("PwAvailableCharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge);
+		printf("PwAvailableDisharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Discharge);
+
+
+		// Real Time Clock Message
+		printf("RTC MESSAGE ---------------\n\r");
+		printf("Year: %u\n\r", BMS_Bat_RTC.Year+1985);
+		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
+		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
+		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
+		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
+		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+
+		printf("\n\r");
 		HAL_Delay(100);
 
 	}
@@ -326,9 +357,12 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("\n\r");
 }
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
+
+#ifdef _DEBUG_ON
 	printf("CAN Message Received from CAN Interface CAN");
 	printf(itoa((hcan->Instance != CAN1) + 1, str, 10));
 	printf("\n\r");
+#endif
 	//
 	//
 	//	if (hcan->pRxMsg->StdId == 1)
@@ -337,12 +371,13 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
-		parseBMSCAN(hcan->pRxMsg);
+
 	}
 
 
 	if (hcan->Instance == CAN2) {
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+		parseBMSCAN(hcan->pRxMsg);
 	}
 
 	for (int i = 0; i < 1000; i++) {}
@@ -355,7 +390,21 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 }
 
 void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
-	int32_t ind = 0;
+	static const float _Current_Factor = 0.05;
+	static const float _Voltage_Factor = 0.05;
+	static const float _Impedance_Factor = 0.01;
+	static const float _CellVolt_Factor = 0.01;
+	static const float _Day_Factor = 0.25;
+	static const float _Second_Factor = 0.25;
+	static const float _SOC_Factor = 0.5;
+	static const float _Capacity_Factor = 0.01;
+
+
+	static const uint16_t _Current_Offset = 1600;
+	static const uint16_t _Temp_Offset = 40;
+	static const uint32_t _PwAvailable_Offset = 2000000000;
+	static const float _Year_Offset = 1985;
+
 
 	switch (BMSRxMsg->ExtId) {
 
@@ -365,31 +414,50 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	case AllCell_Bat_Info_ID:
 		memcpy(&BMS_Bat_Info, BMSRxMsg->Data, sizeof(BMS_Bat_Info));
-		//BMS_Bat_Info.Voltage = buffer_get_int16(BMSRxMsg->Data, &ind);
+		BMS_Bat_Info.Voltage *= _Voltage_Factor;
+		BMS_Bat_Info.Current = BMS_Bat_Info.Current * _Current_Factor - _Current_Offset;
+		BMS_Bat_Info.Temp -= _Temp_Offset;
+		BMS_Bat_Info.Impedance *= _Impedance_Factor;
 		break;
 
 	case AllCell_Bat_Current_ID:
 		memcpy(&BMS_Bat_Current, BMSRxMsg->Data, sizeof(BMS_Bat_Current));
+		BMS_Bat_Current.Current = BMS_Bat_Current.Current * _Current_Factor - _Current_Offset;
+		BMS_Bat_Current.Charge_Limit = BMS_Bat_Current.Charge_Limit * _Current_Factor;
+		BMS_Bat_Current.Discharge_Limit = BMS_Bat_Current.Discharge_Limit * _Current_Factor;
 		break;
 
 	case AllCell_Bat_Voltage_ID:
 		memcpy(&BMS_Bat_Voltage, BMSRxMsg->Data, sizeof(BMS_Bat_Voltage));
+		BMS_Bat_Voltage.Voltage *= _Voltage_Factor;
+		BMS_Bat_Voltage.Min_Cell_Voltage *= _CellVolt_Factor;
+		BMS_Bat_Voltage.Max_Cell_Voltage *= _CellVolt_Factor;
 		break;
 
 	case AllCell_Bat_Temperature_ID:
 		memcpy(&BMS_Bat_Temperature, BMSRxMsg->Data, sizeof(BMS_Bat_Temperature));
+		BMS_Bat_Temperature.Temp_BMS -= _Temp_Offset;
+		BMS_Bat_Temperature.Avg_Cell_Temp -= _Temp_Offset;
+		BMS_Bat_Temperature.Min_Cell_Temp -= _Temp_Offset;
+		BMS_Bat_Temperature.Max_Cell_Temp -= _Temp_Offset;
 		break;
 
 	case AllCell_Bat_Status_ID:
 		memcpy(&BMS_Bat_Status, BMSRxMsg->Data, sizeof(BMS_Bat_Status));
+		BMS_Bat_Status.SOC *= _SOC_Factor;
+		BMS_Bat_Status.Capacity *= _Capacity_Factor;
 		break;
 
 	case AllCell_Bat_PwAvailable_ID:
 		memcpy(&BMS_Bat_PwAvailable, BMSRxMsg->Data, sizeof(BMS_Bat_PwAvailable));
+		BMS_Bat_PwAvailable.PwAvailable_Charge -= _PwAvailable_Offset;
+		BMS_Bat_PwAvailable.PwAvailable_Discharge -= _PwAvailable_Offset;
 		break;
 
 	case AllCell_Bat_RTC_ID:
 		memcpy(&BMS_Bat_RTC, BMSRxMsg->Data, sizeof(BMS_Bat_RTC));
+		BMS_Bat_RTC.Day *= _Day_Factor;
+		BMS_Bat_RTC.Second *= _Second_Factor;
 		break;
 
 	default:
@@ -701,6 +769,14 @@ uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index) {
 			((uint16_t) buffer[*index + 1]);
 	*index += 2;
 	return res;
+}
+
+static inline int bcd_decimal(uint8_t hex)
+{
+	//    assert(((hex & 0xF0) >> 4) < 10);  // More significant nybble is valid
+	//    assert((hex & 0x0F) < 10);         // Less significant nybble is valid
+	int dec = ((hex & 0xF0) >> 4) * 10 + (hex & 0x0F);
+	return dec;
 }
 /* USER CODE END 4 */
 
