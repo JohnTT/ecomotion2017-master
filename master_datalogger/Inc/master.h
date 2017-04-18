@@ -19,8 +19,8 @@
 
 #ifdef _CAR
 
-#define _ERRORHANDLER_CAN1TRANSMIT
-#define _REBROADCAST_ALLCELL
+#define _ERRORHANDLER_CAN1TRANSMIT 1
+#define _REBROADCAST_ALLCELL 1
 
 #endif
 
@@ -29,6 +29,7 @@
 #define _DEBUG_ON 1
 
 #ifdef _DEBUG_ON
+#define _REBROADCAST_ALLCELL 1
 #define _CAN_PRINTF 1
 #endif
 
@@ -172,5 +173,6 @@ char *itoa (int value, char *result, int base);
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal);
 void __io_putchar(uint8_t ch);
 static inline int bcd_decimal(uint8_t hex);
+void printUART2();
 
 #endif /* MASTER_H_ */

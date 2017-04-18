@@ -134,6 +134,9 @@ int main(void)
 	SystemClock_Config();
 
 	/* Initialize all configured peripherals */
+
+	/* USER CODE END 2 */
+#ifdef _DEBUG_ON
 	MX_GPIO_Init();
 	MX_CAN1_Init();
 	MX_USART2_UART_Init();
@@ -142,7 +145,14 @@ int main(void)
 	//MX_I2C1_Init();
 	//	MX_SDIO_SD_Init();
 	//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
-	/* USER CODE END 2 */
+#else
+	MX_GPIO_Init();
+	MX_CAN1_Init();
+	MX_USART2_UART_Init();
+	MX_CAN2_Init();
+	MX_TIM1_Init();
+	MX_I2C1_Init();
+#endif
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
@@ -152,7 +162,7 @@ int main(void)
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		printf("MAIN LOOP\n\r");
+		printf("MAIN LOOP MASTER\n\r");
 
 #ifdef _REBROADCAST_ALLCELL
 		// Important Information
@@ -174,77 +184,7 @@ int main(void)
 		}
 #endif
 
-		// Bat State - Need to be started
-		printf("STATE MESSAGE ---------------\n\r");
-		printf("Number of Power Cycles: %u\n\r", BMS_Bat_State.Reset);
-
-		// Bat Info Message
-		printf("INFO MESSAGE ---------------\n\r");
-		printf("Current: %u Amps\n\r", BMS_Bat_Info.Current);
-		printf("Voltage: %u Volts\n\r", BMS_Bat_Info.Voltage);
-		printf("Temperature: %u deg Celsius\n\r", BMS_Bat_Info.Temp);
-		printf("Impedance: %u mOhm\n\r", BMS_Bat_Info.Impedance);
-
-		// Bat Current Message
-		printf("CURRENT MESSAGE ---------------\n\r");
-		printf("Current: %u Amps\n\r", BMS_Bat_Current.Current);
-		printf("Charge Limit: %u Amps\n\r", BMS_Bat_Current.Charge_Limit);
-		printf("Disharge Limit: %u Amps\n\r", BMS_Bat_Current.Discharge_Limit);
-
-		// Voltage Message
-		printf("VOLTAGE MESSAGE ---------------\n\r");
-		printf("Voltage: %u Volts\n\r", BMS_Bat_Voltage.Voltage);
-		printf("Min Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
-		printf("Min Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
-		printf("Max Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
-		printf("Max Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
-
-		// Temp Message
-		printf("TEMP MESSAGE ---------------\n\r");
-		printf("BMS Temperature: %u deg Celsius\n\r", BMS_Bat_Temperature.Temp_BMS);
-		printf("Min Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Min_Cell_Temp);
-		printf("Min Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Min_Temp);
-		printf("Max Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Max_Cell_Temp);
-		printf("Max Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Max_Temp);
-
-		// Status Message
-		printf("STATUS MESSAGE ---------------\n\r");
-		printf("State of Charge: %u %%\n\r", BMS_Bat_Status.SOC);
-		printf("Current Capacity: %u Ahr\n\r", BMS_Bat_Status.Capacity);
-
-		// Power Available Message
-		printf("POWER AVAILABLE MESSAGE ---------------\n\r");
-		printf("PwAvailableCharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge);
-		printf("PwAvailableDisharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Discharge);
-
-
-		// Real Time Clock Message
-		printf("RTC MESSAGE ---------------\n\r");
-		printf("Year: %u\n\r", BMS_Bat_RTC.Year+1985);
-		printf("Month: %u\n\r", BMS_Bat_RTC.Month);
-		printf("Day: %u\n\r", BMS_Bat_RTC.Day);
-		printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
-		printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
-		printf("Second: %u\n\r", BMS_Bat_RTC.Second);
-
-		// Exact BMS Data as Doubles
-		printf("BMS doubles ---------------\n\r");
-		printf("Current <InfoMsg>: %f [Amps]\n\r", bmsDataExact.currentInfoMsg);
-		printf("Voltage <InfoMsg>: %f [Volts]\n\r", bmsDataExact.voltageInfoMsg);
-		printf("Impedance <InfoMsg>: %f [mOhms]\n\r", bmsDataExact.impedance);
-		printf("Current <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.currentCurMsg);
-		printf("Charge Limit <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.chargeLim);
-		printf("Discharge <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.dischargeLim);
-		printf("Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.voltageVoltMsg);
-		printf("Min Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.mincellVoltage);
-		printf("Max Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.maxcellVoltage);
-		printf("Percent Charged <StateMsg>: %f [%%]\n\r", bmsDataExact.percentCharged);
-		printf("Current Capacity <StateMsg>: %f [Ahr]\n\r", bmsDataExact.currentCapacity);
-
-		printf("\n\r");
-
-
-
+		//printUART2();
 		HAL_Delay(1000);
 
 	}
@@ -438,9 +378,6 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 		bmsDataExact.currentInfoMsg = BMS_Bat_Info.Current * _Current_Factor - _Current_Offset;
 		bmsDataExact.impedance  = BMS_Bat_Info.Impedance * _Impedance_Factor;
 
-		BMS_Bat_Info.Voltage *= _Voltage_Factor;
-		BMS_Bat_Info.Current = BMS_Bat_Info.Current * _Current_Factor - _Current_Offset;
-		BMS_Bat_Info.Temp -= _Temp_Offset;
 		BMS_Bat_Info.Impedance *= _Impedance_Factor;
 		break;
 
@@ -479,7 +416,6 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 		bmsDataExact.percentCharged = BMS_Bat_Status.SOC * _SOC_Factor;
 		bmsDataExact.currentCapacity = BMS_Bat_Status.Capacity * _Capacity_Factor;
 
-		BMS_Bat_Status.SOC *= _SOC_Factor;
 		BMS_Bat_Status.Capacity *= _Capacity_Factor;
 		break;
 
@@ -655,6 +591,78 @@ void __io_putchar(uint8_t ch) {
 }
 #endif
 
+void printUART2() {
+	// Bat State - Need to be started
+	printf("STATE MESSAGE ---------------\n\r");
+	printf("Number of Power Cycles: %u\n\r", BMS_Bat_State.Reset);
+
+	// Bat Info Message
+	printf("INFO MESSAGE ---------------\n\r");
+	printf("Current: %u Amps\n\r", BMS_Bat_Info.Current);
+	printf("Voltage: %u Volts\n\r", BMS_Bat_Info.Voltage);
+	printf("Temperature: %u deg Celsius\n\r", BMS_Bat_Info.Temp);
+	printf("Impedance: %u mOhm\n\r", BMS_Bat_Info.Impedance);
+
+	// Bat Current Message
+	printf("CURRENT MESSAGE ---------------\n\r");
+	printf("Current: %u Amps\n\r", BMS_Bat_Current.Current);
+	printf("Charge Limit: %u Amps\n\r", BMS_Bat_Current.Charge_Limit);
+	printf("Disharge Limit: %u Amps\n\r", BMS_Bat_Current.Discharge_Limit);
+
+	// Voltage Message
+	printf("VOLTAGE MESSAGE ---------------\n\r");
+	printf("Voltage: %u Volts\n\r", BMS_Bat_Voltage.Voltage);
+	printf("Min Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
+	printf("Min Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
+	printf("Max Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
+	printf("Max Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
+
+	// Temp Message
+	printf("TEMP MESSAGE ---------------\n\r");
+	printf("BMS Temperature: %u deg Celsius\n\r", BMS_Bat_Temperature.Temp_BMS);
+	printf("Min Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Min_Cell_Temp);
+	printf("Min Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Min_Temp);
+	printf("Max Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Max_Cell_Temp);
+	printf("Max Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Max_Temp);
+
+	// Status Message
+	printf("STATUS MESSAGE ---------------\n\r");
+	printf("State of Charge: %u %%\n\r", BMS_Bat_Status.SOC);
+	printf("Current Capacity: %u Ahr\n\r", BMS_Bat_Status.Capacity);
+
+	// Power Available Message
+	printf("POWER AVAILABLE MESSAGE ---------------\n\r");
+	printf("PwAvailableCharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge);
+	printf("PwAvailableDisharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Discharge);
+
+
+	// Real Time Clock Message
+	printf("RTC MESSAGE ---------------\n\r");
+	printf("Year: %u\n\r", BMS_Bat_RTC.Year+1985);
+	printf("Month: %u\n\r", BMS_Bat_RTC.Month);
+	printf("Day: %u\n\r", BMS_Bat_RTC.Day);
+	printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
+	printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
+	printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+
+	// Exact BMS Data as Doubles
+	printf("BMS doubles ---------------\n\r");
+	printf("Current <InfoMsg>: %f [Amps]\n\r", bmsDataExact.currentInfoMsg);
+	printf("Voltage <InfoMsg>: %f [Volts]\n\r", bmsDataExact.voltageInfoMsg);
+	printf("Impedance <InfoMsg>: %f [mOhms]\n\r", bmsDataExact.impedance);
+	printf("Current <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.currentCurMsg);
+	printf("Charge Limit <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.chargeLim);
+	printf("Discharge <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.dischargeLim);
+	printf("Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.voltageVoltMsg);
+	printf("Min Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.mincellVoltage);
+	printf("Max Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.maxcellVoltage);
+	printf("Percent Charged <StateMsg>: %f [%%]\n\r", bmsDataExact.percentCharged);
+	printf("Current Capacity <StateMsg>: %f [Ahr]\n\r", bmsDataExact.currentCapacity);
+
+	printf("\n\r");
+
+}
+
 static void MX_CAN1_Init(void)
 {
 	__HAL_RCC_CAN1_CLK_ENABLE();
@@ -806,6 +814,7 @@ static void MX_GPIO_Init(void)
 
 }
 
+
 /* USER CODE END 4 */
 
 /**
@@ -833,7 +842,7 @@ void Error_Handler(void)
 
 		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
 		for (int i = 0; i < 1000; i++) {}
-			HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
 
 
 		HAL_Delay(100);
