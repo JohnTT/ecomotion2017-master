@@ -15,7 +15,7 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
-#define _CAR 1
+//#define _CAR 1
 
 #ifdef _CAR
 
@@ -29,7 +29,7 @@
 #define _DEBUG_ON 1
 
 #ifdef _DEBUG_ON
-#define _REBROADCAST_ALLCELL 1
+//#define _REBROADCAST_ALLCELL 1
 #define _CAN_PRINTF 1
 #endif
 

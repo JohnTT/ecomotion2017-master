@@ -81,7 +81,9 @@ AllCell_Bat_DataDoubles bmsDataExact;
 
 static float DIAMETER = 0.50; //50 cm diameter
 static float PI = 3.1415926535; //the number pi
-static int CLOCKSPEED = 20000; //timer's clock
+static int CLOCKSPEED = 10000; //timer's clock
+static int NUM_MAGNET = 2;
+static int PERIOD_TIMER = 60000;
 float rpmChan1; //revolutions per minute for one of the wheels of the vehicle
 float speedChan1; //holds the car's speed from tim1 channel 1
 //float rpmChan2; //revolutions per minute for the other wheel of the vehicle
@@ -95,7 +97,6 @@ unsigned int tim1Ch1Compare; //holds the compared value from tim1 channel 1
 unsigned int tim1Ch1Overflow; //holds the overflow bit for channel 1 when the tim1 clock resets to 0
 char str[10]; //holds string values
 int blinky = 0; //does stuff
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,10 +139,10 @@ int main(void)
 	/* USER CODE END 2 */
 #ifdef _DEBUG_ON
 	MX_GPIO_Init();
-	MX_CAN1_Init();
+//	MX_CAN1_Init();
 	MX_USART2_UART_Init();
-	MX_CAN2_Init();
-	//  MX_TIM1_Init();
+//	MX_CAN2_Init();
+	MX_TIM1_Init();
 	//MX_I2C1_Init();
 	//	MX_SDIO_SD_Init();
 	//	MX_FATFS_Init();//NEVER INIT THIS!!! IT NO WORK!!!!
@@ -156,14 +157,16 @@ int main(void)
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	HAL_Delay(1000);
+	HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1); //look into peripheral control functions to find out more about configuration
+	HAL_TIM_Base_Start_IT(&htim1); //start the base for update interrupts
+//	HAL_Delay(1000);
 	while (1)
 	{
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
 		printf("MAIN LOOP MASTER\n\r");
-
+		printf("Counter = %d\n\r", counter);
 #ifdef _REBROADCAST_ALLCELL
 		// Important Information
 		HAL_StatusTypeDef status;
@@ -455,22 +458,24 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-	counter = __HAL_TIM_GetCounter(&htim1); //read TIM1 counter value
+	counter = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 counter value
 	if (htim->Instance == TIM1){
-
 		if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
 			if (tim1Ch1Overflow)
-				tim1Ch1Compare = 65535 - tim1Ch1Capture + counter; //flip around
+				tim1Ch1Compare = PERIOD_TIMER - tim1Ch1Capture + counter; //flip around
 			else
 				tim1Ch1Compare = counter - tim1Ch1Capture; //going up
 		}
 		tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
-		tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
-		printf("Captured Tim1 Value:");
-		printf(itoa(tim1Ch1Compare, str, 10));
-		printf("\n\r");
-		speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
-		//__HAL_TIM_SetCounter(htim, 0); //resets the counter after input capture interrupt occurs
+		tim1Ch1Capture = counter;  //read TIM1 channel 1 capture value for the next Compare
+		if (tim1Ch1Compare <= 1000){ //MUST FIX THIS
+		}
+		else {
+			printf("Captured Tim1 Value:");
+			printf(itoa(tim1Ch1Compare, str, 10));
+			printf("\n\r");
+			speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
+		}
 	}
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update event (wrap back to 0)
@@ -516,8 +521,8 @@ char *itoa (int value, char *result, int base)
 	return result;
 }
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal){
-	*rpmVal = (clockSpeed*1.0) / (compareVal* 2.0) * 60; //revs per min
-	*speedVal = (*rpmVal * 2 * PI * wheelDiameter) / 60; //speedChan1, in m/s
+	*rpmVal = (clockSpeed*1.0) / (compareVal* NUM_MAGNET * 1.0) * 60; //revs per min
+	*speedVal = (*rpmVal * PI * wheelDiameter) / 60; //speedChan1, in m/s
 	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
 
 #ifdef _DEBUG_ON
@@ -750,7 +755,7 @@ static void MX_TIM1_Init(void)
 	htim1.Instance = TIM1;
 	htim1.Init.Prescaler = getTim1Prescaler();
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim1.Init.Period = 60000;
+	htim1.Init.Period = PERIOD_TIMER;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim1.Init.RepetitionCounter = 0;
 	if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
