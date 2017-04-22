@@ -51,12 +51,18 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define LD_0_Pin GPIO_PIN_0
+#define LD_0_GPIO_Port GPIOC
+#define LD_1_Pin GPIO_PIN_1
+#define LD_1_GPIO_Port GPIOC
+#define LD_2_Pin GPIO_PIN_2
+#define LD_2_GPIO_Port GPIOC
+#define LD_3_Pin GPIO_PIN_3
+#define LD_3_GPIO_Port GPIOC
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
