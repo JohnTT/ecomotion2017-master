@@ -140,13 +140,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 #ifdef _DEBUG_ON
 	MX_GPIO_Init();
-//	MX_DMA_Init();
+//	MX_CAN1_Init();
 	MX_USART2_UART_Init();
-//	MX_CAN_Init();
-//	MX_SPI1_Init();
+//	MX_CAN2_Init();
 	MX_TIM1_Init();
-	MX_I2C1_Init();
-	MX_TIM2_Init();
+//	MX_I2C1_Init();
+//	MX_SDIO_SD_Init();
+//	MX_FATFS_Init();
 	//Begin: Starts of peripherals, as testing requires
 	HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1); //look into peripheral control functions to find out more about configuration
 	HAL_TIM_Base_Start_IT(&htim1); //start the base for update interrupts
@@ -367,17 +367,17 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 
 	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
-		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD_0_GPIO_Port, LD_0_Pin, GPIO_PIN_SET);
 	}
 
 	if (hcan->Instance == CAN2) {
-		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD_1_GPIO_Port, LD_1_Pin, GPIO_PIN_SET);
 		parseBMSCAN(hcan->pRxMsg);
 	}
 
 	for (int i = 0; i < 1000; i++) {}
-	HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LD_0_GPIO_Port, LD_0_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LD_1_GPIO_Port, LD_1_Pin, GPIO_PIN_RESET);
 
 	if (HAL_CAN_Receive_IT(hcan, hcan->pRxMsg->FIFONumber) != HAL_OK) {
 		Error_Handler();
@@ -849,9 +849,9 @@ void Error_Handler(void)
 		status = HAL_CAN_Transmit_IT(&hcan1);
 #endif
 
-		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD_3_GPIO_Port, LD_3_Pin, GPIO_PIN_SET);
 		for (int i = 0; i < 1000; i++) {}
-		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD_3_GPIO_Port, LD_3_Pin, GPIO_PIN_RESET);
 
 
 		HAL_Delay(100);
