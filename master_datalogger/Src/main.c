@@ -82,19 +82,20 @@ AllCell_Bat_DataDoubles bmsDataExact;
 static float DIAMETER = 0.50; //50 cm diameter
 static float PI = 3.1415926535; //the number pi
 static int CLOCKSPEED = 10000; //timer's clock
-static int NUM_MAGNET = 2;
-static int PERIOD_TIMER = 60000;
+static int NUM_MAGNET = 2; //the number of magnets on the wheel
+static unsigned int PERIOD_TIMER = 60000; //timer's period
 float rpmChan1; //revolutions per minute for one of the wheels of the vehicle
 float speedChan1; //holds the car's speed from tim1 channel 1
 //float rpmChan2; //revolutions per minute for the other wheel of the vehicle
 //float speedChan2; //holds the car's speed from tim1 channel 2
 int ADCScalingFactor; //should be constant
 double NORMALFACTOR; //should be constant
-unsigned int counter; //holds tim1 clock
+unsigned int currCapture; //holds tim1 clock
 unsigned int analog; //holds the analog value for hadc1
-unsigned int tim1Ch1Capture = 70000; //holds the last value from tim1 channel 1
+unsigned int lastCapture = 70000; //holds the last value from tim1 channel 1
 unsigned int tim1Ch1Compare; //holds the compared value from tim1 channel 1
 unsigned int tim1Ch1Overflow; //holds the overflow bit for channel 1 when the tim1 clock resets to 0
+unsigned int lastValue = 0;
 char str[10]; //holds string values
 int blinky = 0; //does stuff
 /* USER CODE END PV */
@@ -161,9 +162,8 @@ int main(void)
 	MX_SDIO_SD_Init();
 	MX_FATFS_Init();
 
+	HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1); //look into peripheral control functions to find out more about configuration
 	HAL_TIM_Base_Start_IT(&htim1); //start the base for update interrupts
-	flag = 0;
-	updateBufferDMA();
 #endif
   /* USER CODE END 2 */
 
@@ -175,7 +175,6 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 		printf("MAIN LOOP MASTER\n\r");
-		printf("Counter = %d\n\r", counter);
 #ifdef _REBROADCAST_ALLCELL
 		// Important Information
 		HAL_StatusTypeDef status;
@@ -194,6 +193,8 @@ int main(void)
 		if (status != HAL_OK) {
 			Error_Handler();
 		}
+//		hcan1.pTxMsg->StdId = ecoMotion_MasterRTC;
+//		hcan1.pTxMsg->DLC =
 #endif
 
 		//printUART2();
@@ -354,6 +355,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//CAN functions
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 #ifdef _CAN_PRINTF
 	printf("Message Sent Successfully on CAN%u\n\r", (hcan->Instance != CAN1)+1);
@@ -383,7 +385,11 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 		Error_Handler();
 	}
 }
-
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan){
+	printf("The can encountered an error\n\r");
+	printf("The error was %d", HAL_CAN_GetError(hcan));
+	//hal can error
+}
 void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 	static const float _Current_Factor = 0.05;
 	static const float _Voltage_Factor = 0.05;
@@ -487,219 +493,6 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	}
 }
-
-
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-	counter = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 counter value
-	if (htim->Instance == TIM1){
-		if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
-			if (tim1Ch1Overflow)
-				tim1Ch1Compare = PERIOD_TIMER - tim1Ch1Capture + counter; //flip around
-			else
-				tim1Ch1Compare = counter - tim1Ch1Capture; //going up
-		}
-		tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
-		tim1Ch1Capture = counter;  //read TIM1 channel 1 capture value for the next Compare
-		if (tim1Ch1Compare <= 1000){ //MUST FIX THIS
-		}
-		else {
-			printf("Captured Tim1 Value:");
-			printf(itoa(tim1Ch1Compare, str, 10));
-			printf("\n\r");
-			speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
-		}
-	}
-}
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update event (wrap back to 0)
-	//put overflow bit stuff here.
-	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-	printf("we elapsed");
-	if(tim1Ch1Overflow && tim1Ch1Capture != 70000){
-		Error_Handler();//error handler stuff, nothing for now
-	}
-	else {
-		tim1Ch1Overflow = 1;
-	}
-
-}
-int getTim1Prescaler(){
-	return HAL_RCC_GetPCLK2Freq() / 5000; //since it is multiplied by 2
-}
-char *itoa (int value, char *result, int base)
-{
-	// check that the base if valid
-	if (base < 2 || base > 36) {
-		*result = '\0';
-		return result;
-	}
-
-	char* ptr = result, *ptr1 = result, tmp_char;
-	int tmp_value;
-
-	do {
-		tmp_value = value;
-		value /= base;
-		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-	} while ( value );
-
-	// Apply negative sign
-	if (tmp_value < 0) *ptr++ = '-';
-	*ptr-- = '\0';
-	while (ptr1 < ptr) {
-		tmp_char = *ptr;
-		*ptr--= *ptr1;
-		*ptr1++ = tmp_char;
-	}
-	return result;
-}
-void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal){
-	*rpmVal = (clockSpeed*1.0) / (compareVal* NUM_MAGNET * 1.0) * 60; //revs per min
-	*speedVal = (*rpmVal * PI * wheelDiameter) / 60; //speedChan1, in m/s
-	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
-
-#ifdef _DEBUG_ON
-	printf("Revs per min: ");
-	printf(itoa(*rpmVal, str, 10));
-	printf("\n\r");
-	printf("Real Speed: ");
-	printf(itoa(*speedVal, str, 10));
-	printf("\n\r");
-#endif
-}
-static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan) {
-	uint8_t prescaleFactor = 0;
-	switch (periphClock) {
-	case 32:
-		theHcan->Init.BS1 = CAN_BS1_13TQ;
-		theHcan->Init.BS2 = CAN_BS2_2TQ;
-		prescaleFactor = 2;
-		break;
-	case 36:
-		theHcan->Init.BS1 = CAN_BS1_14TQ;
-		theHcan->Init.BS2 = CAN_BS2_3TQ;
-		prescaleFactor = 2;
-		break;
-	case 45:
-		theHcan->Init.BS1 = CAN_BS1_12TQ;
-		theHcan->Init.BS2 = CAN_BS2_2TQ;
-		prescaleFactor = 3;
-		break;
-	case 48:
-		theHcan->Init.BS1 = CAN_BS1_12TQ;
-		theHcan->Init.BS2 = CAN_BS2_3TQ;
-		prescaleFactor = 3;
-		break;
-	}
-	theHcan->Init.SJW = CAN_SJW_1TQ;
-	switch (bitRate) {
-	case 1000:
-		theHcan->Init.Prescaler = prescaleFactor * 1;
-		break;
-	case 500:
-		theHcan->Init.Prescaler = prescaleFactor * 2;
-		break;
-	case 250:
-		theHcan->Init.Prescaler = prescaleFactor * 4;
-		break;
-	case 125:
-		theHcan->Init.Prescaler = prescaleFactor * 8;
-		break;
-	case 100:
-		theHcan->Init.Prescaler = prescaleFactor * 10;
-		break;
-	case 83:
-		theHcan->Init.Prescaler = prescaleFactor * 12;
-		break;
-	case 50:
-		theHcan->Init.Prescaler = prescaleFactor * 20;
-		break;
-	case 20:
-		theHcan->Init.Prescaler = prescaleFactor * 50;
-		break;
-	case 10:
-		theHcan->Init.Prescaler = prescaleFactor * 100;
-		break;
-	}
-}
-
-#ifdef _DEBUG_ON
-void __io_putchar(uint8_t ch) {
-	HAL_UART_Transmit(&huart2, &ch, 1, 1);
-}
-#endif
-
-void printUART2() {
-	// Bat State - Need to be started
-	printf("STATE MESSAGE ---------------\n\r");
-	printf("Number of Power Cycles: %u\n\r", BMS_Bat_State.Reset);
-
-	// Bat Info Message
-	printf("INFO MESSAGE ---------------\n\r");
-	printf("Current: %u Amps\n\r", BMS_Bat_Info.Current);
-	printf("Voltage: %u Volts\n\r", BMS_Bat_Info.Voltage);
-	printf("Temperature: %u deg Celsius\n\r", BMS_Bat_Info.Temp);
-	printf("Impedance: %u mOhm\n\r", BMS_Bat_Info.Impedance);
-
-	// Bat Current Message
-	printf("CURRENT MESSAGE ---------------\n\r");
-	printf("Current: %u Amps\n\r", BMS_Bat_Current.Current);
-	printf("Charge Limit: %u Amps\n\r", BMS_Bat_Current.Charge_Limit);
-	printf("Disharge Limit: %u Amps\n\r", BMS_Bat_Current.Discharge_Limit);
-
-	// Voltage Message
-	printf("VOLTAGE MESSAGE ---------------\n\r");
-	printf("Voltage: %u Volts\n\r", BMS_Bat_Voltage.Voltage);
-	printf("Min Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
-	printf("Min Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
-	printf("Max Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
-	printf("Max Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
-
-	// Temp Message
-	printf("TEMP MESSAGE ---------------\n\r");
-	printf("BMS Temperature: %u deg Celsius\n\r", BMS_Bat_Temperature.Temp_BMS);
-	printf("Min Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Min_Cell_Temp);
-	printf("Min Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Min_Temp);
-	printf("Max Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Max_Cell_Temp);
-	printf("Max Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Max_Temp);
-
-	// Status Message
-	printf("STATUS MESSAGE ---------------\n\r");
-	printf("State of Charge: %u %%\n\r", BMS_Bat_Status.SOC);
-	printf("Current Capacity: %u Ahr\n\r", BMS_Bat_Status.Capacity);
-
-	// Power Available Message
-	printf("POWER AVAILABLE MESSAGE ---------------\n\r");
-	printf("PwAvailableCharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge);
-	printf("PwAvailableDisharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Discharge);
-
-
-	// Real Time Clock Message
-	printf("RTC MESSAGE ---------------\n\r");
-	printf("Year: %u\n\r", BMS_Bat_RTC.Year+1985);
-	printf("Month: %u\n\r", BMS_Bat_RTC.Month);
-	printf("Day: %u\n\r", BMS_Bat_RTC.Day);
-	printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
-	printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
-	printf("Second: %u\n\r", BMS_Bat_RTC.Second);
-
-	// Exact BMS Data as Doubles
-	printf("BMS doubles ---------------\n\r");
-	printf("Current <InfoMsg>: %f [Amps]\n\r", bmsDataExact.currentInfoMsg);
-	printf("Voltage <InfoMsg>: %f [Volts]\n\r", bmsDataExact.voltageInfoMsg);
-	printf("Impedance <InfoMsg>: %f [mOhms]\n\r", bmsDataExact.impedance);
-	printf("Current <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.currentCurMsg);
-	printf("Charge Limit <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.chargeLim);
-	printf("Discharge <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.dischargeLim);
-	printf("Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.voltageVoltMsg);
-	printf("Min Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.mincellVoltage);
-	printf("Max Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.maxcellVoltage);
-	printf("Percent Charged <StateMsg>: %f [%%]\n\r", bmsDataExact.percentCharged);
-	printf("Current Capacity <StateMsg>: %f [Ahr]\n\r", bmsDataExact.currentCapacity);
-
-	printf("\n\r");
-
-}
-
 static void MX_CAN1_Init(void)
 {
 	__HAL_RCC_CAN1_CLK_ENABLE();
@@ -777,6 +570,120 @@ static void MX_CAN2_Init(void)
 		Error_Handler();
 	}
 }
+static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan) {
+	uint8_t prescaleFactor = 0;
+	switch (periphClock) {
+	case 32:
+		theHcan->Init.BS1 = CAN_BS1_13TQ;
+		theHcan->Init.BS2 = CAN_BS2_2TQ;
+		prescaleFactor = 2;
+		break;
+	case 36:
+		theHcan->Init.BS1 = CAN_BS1_14TQ;
+		theHcan->Init.BS2 = CAN_BS2_3TQ;
+		prescaleFactor = 2;
+		break;
+	case 45:
+		theHcan->Init.BS1 = CAN_BS1_12TQ;
+		theHcan->Init.BS2 = CAN_BS2_2TQ;
+		prescaleFactor = 3;
+		break;
+	case 48:
+		theHcan->Init.BS1 = CAN_BS1_12TQ;
+		theHcan->Init.BS2 = CAN_BS2_3TQ;
+		prescaleFactor = 3;
+		break;
+	}
+	theHcan->Init.SJW = CAN_SJW_1TQ;
+	switch (bitRate) {
+	case 1000:
+		theHcan->Init.Prescaler = prescaleFactor * 1;
+		break;
+	case 500:
+		theHcan->Init.Prescaler = prescaleFactor * 2;
+		break;
+	case 250:
+		theHcan->Init.Prescaler = prescaleFactor * 4;
+		break;
+	case 125:
+		theHcan->Init.Prescaler = prescaleFactor * 8;
+		break;
+	case 100:
+		theHcan->Init.Prescaler = prescaleFactor * 10;
+		break;
+	case 83:
+		theHcan->Init.Prescaler = prescaleFactor * 12;
+		break;
+	case 50:
+		theHcan->Init.Prescaler = prescaleFactor * 20;
+		break;
+	case 20:
+		theHcan->Init.Prescaler = prescaleFactor * 50;
+		break;
+	case 10:
+		theHcan->Init.Prescaler = prescaleFactor * 100;
+		break;
+	}
+}
+
+//Speed sensors reading
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+	if (htim->Instance == TIM1){
+		currCapture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 counter value
+		if (lastCapture != 70000){//initial capture, should be better initialized
+			if (tim1Ch1Overflow){
+				tim1Ch1Compare = PERIOD_TIMER - lastCapture + currCapture; //flip around
+			}
+			else
+				tim1Ch1Compare = currCapture - lastCapture; //going up
+			printf("Captured Tim1 Value: %u\n\r", tim1Ch1Compare);
+			printf("currCapture is : %u\n\r", currCapture);
+			printf("lastCapture is : %u\n\r", lastCapture);
+			speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
+			tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
+		}
+		lastCapture = currCapture;  //read TIM1 channel 1 capture value for the next Compare
+
+	}
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update event (wrap back to 0)
+	//put overflow bit stuff here.
+	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	printf("we elapsed\n\r");
+	if (lastCapture == 70000){
+		//do nothing, hasn't started moving yet
+	}
+	else if(tim1Ch1Overflow){ //moving to slow to register, stopped (could compare to throttle input)
+		speedChan1 = 0;
+		rpmChan1 = 0;
+		lastCapture = 70000;
+	}
+	else {
+		tim1Ch1Overflow = 1;
+	}
+
+}
+void HAL_TIM_ErrorCallback(TIM_HandleTypeDef *htim){
+	printf("The timer encountered an error");
+	//something went wrong
+}
+int getTim1Prescaler(){
+	return HAL_RCC_GetPCLK2Freq() / 5000; //since it is multiplied by 2
+}
+void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal){
+	*rpmVal = (clockSpeed*1.0) / (compareVal* NUM_MAGNET * 1.0) * 60; //revs per min
+	*speedVal = (*rpmVal * PI * wheelDiameter) / 60.0; //speedChan1, in m/s
+	*speedVal = (*speedVal * 3.6); //speedChan1, in km/h
+
+#ifdef _DEBUG_ON
+	printf("Revs per min: ");
+	printf(itoa(*rpmVal, str, 10));
+	printf("\n\r");
+	printf("Real Speed: ");
+	printf(itoa(*speedVal, str, 10));
+	printf("\n\r");
+#endif
+}
 static void MX_TIM1_Init(void)
 {
 
@@ -824,6 +731,110 @@ static void MX_TIM1_Init(void)
 }
 
 
+//Reading information
+char *itoa (int value, char *result, int base)
+{
+	// check that the base if valid
+	if (base < 2 || base > 36) {
+		*result = '\0';
+		return result;
+	}
+
+	char* ptr = result, *ptr1 = result, tmp_char;
+	int tmp_value;
+
+	do {
+		tmp_value = value;
+		value /= base;
+		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+	} while ( value );
+
+	// Apply negative sign
+	if (tmp_value < 0) *ptr++ = '-';
+	*ptr-- = '\0';
+	while (ptr1 < ptr) {
+		tmp_char = *ptr;
+		*ptr--= *ptr1;
+		*ptr1++ = tmp_char;
+	}
+	return result;
+}
+#ifdef _DEBUG_ON
+void __io_putchar(uint8_t ch) {
+	HAL_UART_Transmit(&huart2, &ch, 1, 1);
+}
+#endif
+void printUART2() {
+	// Bat State - Need to be started
+	printf("STATE MESSAGE ---------------\n\r");
+	printf("Number of Power Cycles: %u\n\r", BMS_Bat_State.Reset);
+
+	// Bat Info Message
+	printf("INFO MESSAGE ---------------\n\r");
+	printf("Current: %u Amps\n\r", BMS_Bat_Info.Current);
+	printf("Voltage: %u Volts\n\r", BMS_Bat_Info.Voltage);
+	printf("Temperature: %u deg Celsius\n\r", BMS_Bat_Info.Temp);
+	printf("Impedance: %u mOhm\n\r", BMS_Bat_Info.Impedance);
+
+	// Bat Current Message
+	printf("CURRENT MESSAGE ---------------\n\r");
+	printf("Current: %u Amps\n\r", BMS_Bat_Current.Current);
+	printf("Charge Limit: %u Amps\n\r", BMS_Bat_Current.Charge_Limit);
+	printf("Disharge Limit: %u Amps\n\r", BMS_Bat_Current.Discharge_Limit);
+
+	// Voltage Message
+	printf("VOLTAGE MESSAGE ---------------\n\r");
+	printf("Voltage: %u Volts\n\r", BMS_Bat_Voltage.Voltage);
+	printf("Min Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Min_Cell_Voltage);
+	printf("Min Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Min_Voltage);
+	printf("Max Cell Voltage: %u Volts\n\r", BMS_Bat_Voltage.Max_Cell_Voltage);
+	printf("Max Cell Number: %u\n\r", BMS_Bat_Voltage.Nb_Max_Voltage);
+
+	// Temp Message
+	printf("TEMP MESSAGE ---------------\n\r");
+	printf("BMS Temperature: %u deg Celsius\n\r", BMS_Bat_Temperature.Temp_BMS);
+	printf("Min Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Min_Cell_Temp);
+	printf("Min Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Min_Temp);
+	printf("Max Cell Temp: %u deg Celsius\n\r", BMS_Bat_Temperature.Max_Cell_Temp);
+	printf("Max Cell Number: %u\n\r", BMS_Bat_Temperature.Nb_Max_Temp);
+
+	// Status Message
+	printf("STATUS MESSAGE ---------------\n\r");
+	printf("State of Charge: %u %%\n\r", BMS_Bat_Status.SOC);
+	printf("Current Capacity: %u Ahr\n\r", BMS_Bat_Status.Capacity);
+
+	// Power Available Message
+	printf("POWER AVAILABLE MESSAGE ---------------\n\r");
+	printf("PwAvailableCharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Charge);
+	printf("PwAvailableDisharge: %lu Watts\n\r", BMS_Bat_PwAvailable.PwAvailable_Discharge);
+
+
+	// Real Time Clock Message
+	printf("RTC MESSAGE ---------------\n\r");
+	printf("Year: %u\n\r", BMS_Bat_RTC.Year+1985);
+	printf("Month: %u\n\r", BMS_Bat_RTC.Month);
+	printf("Day: %u\n\r", BMS_Bat_RTC.Day);
+	printf("Hour: %u\n\r", BMS_Bat_RTC.Hour);
+	printf("Minute: %u\n\r", BMS_Bat_RTC.Minute);
+	printf("Second: %u\n\r", BMS_Bat_RTC.Second);
+
+	// Exact BMS Data as Doubles
+	printf("BMS doubles ---------------\n\r");
+	printf("Current <InfoMsg>: %f [Amps]\n\r", bmsDataExact.currentInfoMsg);
+	printf("Voltage <InfoMsg>: %f [Volts]\n\r", bmsDataExact.voltageInfoMsg);
+	printf("Impedance <InfoMsg>: %f [mOhms]\n\r", bmsDataExact.impedance);
+	printf("Current <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.currentCurMsg);
+	printf("Charge Limit <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.chargeLim);
+	printf("Discharge <CurrentMsg>: %f [Amps]\n\r", bmsDataExact.dischargeLim);
+	printf("Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.voltageVoltMsg);
+	printf("Min Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.mincellVoltage);
+	printf("Max Cell Voltage <VoltageMsg>: %f [Volts]\n\r", bmsDataExact.maxcellVoltage);
+	printf("Percent Charged <StateMsg>: %f [%%]\n\r", bmsDataExact.percentCharged);
+	printf("Current Capacity <StateMsg>: %f [Ahr]\n\r", bmsDataExact.currentCapacity);
+
+	printf("\n\r");
+
+}
 /* USER CODE END 4 */
 
 /**
