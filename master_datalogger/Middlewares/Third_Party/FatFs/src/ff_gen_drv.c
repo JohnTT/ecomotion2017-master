@@ -69,19 +69,13 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
 {
   uint8_t ret = 1;
   uint8_t DiskNum = 0;
-  printf("disk.nbr %u\n\r", disk.nbr);
-  printf("volumes %i\n\r", _VOLUMES);
+  
   if(disk.nbr <= _VOLUMES)
   {
     disk.is_initialized[disk.nbr] = 0;
-    printf("disk.nbr %u\n\r", disk.nbr);
     disk.drv[disk.nbr] = drv;  
-    printf("disk.nbr %u\n\r", disk.nbr);
     disk.lun[disk.nbr] = lun;  
-    printf("disk.nbr %u\n\r", disk.nbr);
     DiskNum = disk.nbr++;
-    printf("nbr %u\n\r", disk.nbr);
-    printf("DiskNum %u\n\r", DiskNum);
     path[0] = DiskNum + '0';
     path[1] = ':';
     path[2] = '/';

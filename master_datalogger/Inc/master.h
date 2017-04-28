@@ -15,7 +15,7 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
-#define _CAR 1
+//#define _CAR 1
 
 #ifdef _CAR
 
@@ -29,7 +29,7 @@
 #define _DEBUG_ON 1
 
 #ifdef _DEBUG_ON
-#define _REBROADCAST_ALLCELL 1
+//#define _REBROADCAST_ALLCELL 1
 #define _CAN_PRINTF 1
 #endif
 
@@ -149,9 +149,9 @@ typedef enum {
 	ecoMotion_MotorControl = 0x01,
 	ecoMotion_Speed = 0x02,
 	ecoMotion_FrontWheels = 0x03,
-	ecoMotion_Master_BMS = 0x04,
 	ecoMotion_Humidity = 0x05,
-	ecoMotion_Temperature = 0x06,
+	ecoMotion_Temperature_Master = 0x06,
+	ecoMotion_Temperature_Throttle = 0x07,
 	ecoMotion_Throttle = 0x20,
 	ecoMotion_Master = 0x30,
 	ecoMotion_MasterBMS = 0x31,

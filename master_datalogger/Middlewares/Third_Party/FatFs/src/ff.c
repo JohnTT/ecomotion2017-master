@@ -2198,6 +2198,7 @@ int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
 	TCHAR tc;
 #endif
 
+
 	if (*path) {	/* If the pointer is not a null */
 		for (tt = *path; (UINT)*tt >= (_USE_LFN ? ' ' : '!') && *tt != ':'; tt++) ;	/* Find ':' in the path */
 		if (*tt == ':') {	/* If a ':' is exist in the path name */
@@ -2484,34 +2485,29 @@ FRESULT f_mount (
 
 
 	vol = get_ldnumber(&rp);
-	if (vol < 0) {
-		return FR_INVALID_DRIVE;
-	}
+	if (vol < 0) return FR_INVALID_DRIVE;
 	cfs = FatFs[vol];					/* Pointer to fs object */
+
 	if (cfs) {
 #if _FS_LOCK
 		clear_lock(cfs);
 #endif
 #if _FS_REENTRANT						/* Discard sync object of the current volume */
-		if (!ff_del_syncobj(cfs->sobj)) {
-
-			return FR_INT_ERR;
-		}
+		if (!ff_del_syncobj(cfs->sobj)) return FR_INT_ERR;
 #endif
 		cfs->fs_type = 0;				/* Clear old fs object */
 	}
+
 	if (fs) {
 		fs->fs_type = 0;				/* Clear new fs object */
 #if _FS_REENTRANT						/* Create sync object for the new volume */
-		if (!ff_cre_syncobj((BYTE)vol, &fs->sobj)) {
-
-			return FR_INT_ERR;
-		}
+		if (!ff_cre_syncobj((BYTE)vol, &fs->sobj)) return FR_INT_ERR;
 #endif
 	}
 	FatFs[vol] = fs;					/* Register new fs object */
 
 	if (!fs || opt != 1) return FR_OK;	/* Do not mount now, it will be mounted later */
+
 	res = find_volume(&fs, &path, 0);	/* Force mounted the volume */
 	LEAVE_FF(fs, res);
 }
@@ -4161,30 +4157,17 @@ FRESULT f_mkfs (
 
 
 	/* Check mounted drive and clear work area */
-	if (sfd > 1) {
-
-		return FR_INVALID_PARAMETER;
-	}
+	if (sfd > 1) return FR_INVALID_PARAMETER;
 	vol = get_ldnumber(&path);
-	if (vol < 0) {
-
-		return FR_INVALID_DRIVE;
-	}
+	if (vol < 0) return FR_INVALID_DRIVE;
 	fs = FatFs[vol];
-	if (!fs) {
-
-		return FR_NOT_ENABLED;
-	}
+	if (!fs) return FR_NOT_ENABLED;
 	fs->fs_type = 0;
-
 	pdrv = LD2PD(vol);	/* Physical drive */
 	part = LD2PT(vol);	/* Partition (0:auto detect, 1-4:get from partition table)*/
-	printf("%i\n\r", vol);
-    printf("%u\n\r", (uint8_t)part);
 
 	/* Get disk statics */
 	stat = disk_initialize(pdrv);
-	printf("%i\n\r", stat);
 	if (stat & STA_NOINIT) return FR_NOT_READY;
 	if (stat & STA_PROTECT) return FR_WRITE_PROTECTED;
 #if _MAX_SS != _MIN_SS		/* Get disk sector size */
