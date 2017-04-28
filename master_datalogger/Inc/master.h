@@ -45,7 +45,8 @@ typedef enum {
 	AllCell_Bat_Temperature_ID = 0x18FF8220,
 	AllCell_Bat_Status_ID =  0x18FF8320,
 	AllCell_Bat_PwAvailable_ID = 0x18FF8420,
-	AllCell_Bat_RTC_ID = 0x18FFD020
+	AllCell_Bat_RTC_ID = 0x18FFD020,
+	AllCell_Bat_RTC_SET = 0x18FF1621,
 } AllCell_BMS_CAN_ID;
 
 typedef struct {
@@ -172,7 +173,7 @@ uint16_t buffer_get_uint16(const uint8_t *buffer, int32_t *index);
 char *itoa (int value, char *result, int base);
 void speedCalc(int clockSpeed, float wheelDiameter, int compareVal, float* rpmVal, float* speedVal);
 void __io_putchar(uint8_t ch);
-static inline int bcd_decimal(uint8_t hex);
 void printUART2();
+void setAllCellRTC();
 
 #endif /* MASTER_H_ */

@@ -197,8 +197,13 @@ int main(void)
 //		hcan1.pTxMsg->DLC =
 #endif
 
-		//printUART2();
-		HAL_Delay(1000);
+		printUART2();
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED0_Pin, 0);
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED1_Pin, 0);
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED2_Pin, 0);
+		HAL_GPIO_WritePin(LEDx_GPIO_Port, LED3_Pin, 0);
+
+		HAL_Delay(10);
 
 	}
   /* USER CODE END 3 */
@@ -367,7 +372,6 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 	printf("CAN Message Received from CAN Interface CAN %u\n\r", (hcan->Instance != CAN1) + 1);
 #endif
 
-	// CAN1 @ 250Kbps -> BMS
 	if (hcan->Instance == CAN1) {
 		HAL_GPIO_WritePin(LD_0_GPIO_Port, LD_0_Pin, GPIO_PIN_SET);
 	}
@@ -377,9 +381,14 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 		parseBMSCAN(hcan->pRxMsg);
 	}
 
+<<<<<<< HEAD
+	HAL_GPIO_TogglePin(LEDx_GPIO_Port, LED0_Pin);
+	HAL_GPIO_TogglePin(LEDx_GPIO_Port, LED1_Pin);
+=======
 	for (int i = 0; i < 1000; i++) {}
 	HAL_GPIO_WritePin(LD_0_GPIO_Port, LD_0_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD_1_GPIO_Port, LD_1_Pin, GPIO_PIN_RESET);
+>>>>>>> a7c6df5da583d3e1ab5b5267a339de82d703ad93
 
 	if (HAL_CAN_Receive_IT(hcan, hcan->pRxMsg->FIFONumber) != HAL_OK) {
 		Error_Handler();
@@ -493,6 +502,55 @@ void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg) {
 
 	}
 }
+<<<<<<< HEAD
+void setAllCellRTC() {
+	static const float _Day_Factor = 4;
+	static const float _Second_Factor = 4;
+	static const float _Year_Offset = 1985;
+
+	const long unsigned AllCell_Bat_RTC_SET = 0x18FF1521;
+
+	AllCell_Bat_RTC currentTime;
+	HAL_StatusTypeDef status;
+
+	hcan1.pTxMsg->IDE = CAN_ID_EXT;
+	hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+	hcan1.pTxMsg->ExtId = AllCell_Bat_RTC_SET;
+	hcan1.pTxMsg->DLC = 8;
+
+	// Set this to what you want
+	currentTime.Year = 2017 - _Year_Offset;
+	currentTime.Month = 4;
+	currentTime.Day = 27 * _Day_Factor;
+	currentTime.Hour = 8;
+	currentTime.Minute = 0;
+	currentTime.Second = 0 * _Second_Factor;
+
+	memcpy(hcan1.pTxMsg->Data, &currentTime, sizeof(currentTime));
+	status = HAL_CAN_Transmit_IT(&hcan1);
+	if (status != HAL_OK) {
+		Error_Handler();
+	}
+}
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+	counter = __HAL_TIM_GetCounter(&htim1); //read TIM1 counter value
+	if (htim->Instance == TIM1){
+
+		if (tim1Ch1Capture != 70000){//initial capture, should be better initialized
+			if (tim1Ch1Overflow)
+				tim1Ch1Compare = 65535 - tim1Ch1Capture + counter; //flip around
+			else
+				tim1Ch1Compare = counter - tim1Ch1Capture; //going up
+		}
+		tim1Ch1Overflow = 0; //reset the overflow bit, since we capture-compared
+		tim1Ch1Capture = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM1 channel 1 capture value for the next Compare
+		printf("Captured Tim1 Value:");
+		printf(itoa(tim1Ch1Compare, str, 10));
+		printf("\n\r");
+		speedCalc(CLOCKSPEED, DIAMETER, tim1Ch1Compare, &rpmChan1, &speedChan1);
+		//__HAL_TIM_SetCounter(htim, 0); //resets the counter after input capture interrupt occurs
+=======
 static void MX_CAN1_Init(void)
 {
 	__HAL_RCC_CAN1_CLK_ENABLE();
@@ -512,6 +570,7 @@ static void MX_CAN1_Init(void)
 	if (HAL_CAN_Init(&hcan1) != HAL_OK)
 	{
 		Error_Handler();
+>>>>>>> a7c6df5da583d3e1ab5b5267a339de82d703ad93
 	}
 	CAN_FilterConfTypeDef canFilterConfig;
 	canFilterConfig.FilterNumber = 0;
@@ -856,6 +915,11 @@ void Error_Handler(void)
 
 		printf("Error Handler - Master - CAN1 ID: %x\n\r", hcan1.pTxMsg->ExtId);
 
+<<<<<<< HEAD
+//#ifdef _ERRORHANDLER_CAN1TRANSMIT
+//		status = HAL_CAN_Transmit_IT(&hcan1);
+//#endif
+=======
 #ifdef _ERRORHANDLER_CAN1TRANSMIT
 		status = HAL_CAN_Transmit_IT(&hcan1);
 #endif
@@ -864,8 +928,9 @@ void Error_Handler(void)
 		for (int i = 0; i < 1000; i++) {}
 		HAL_GPIO_WritePin(LD_3_GPIO_Port, LD_3_Pin, GPIO_PIN_RESET);
 
+>>>>>>> a7c6df5da583d3e1ab5b5267a339de82d703ad93
 
-		HAL_Delay(100);
+		HAL_GPIO_TogglePin(LEDx_GPIO_Port, LED3_Pin);
 	} while(status != HAL_OK);
   /* USER CODE END Error_Handler */ 
 }
