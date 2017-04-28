@@ -15,7 +15,7 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
-//#define _CAR 1
+#define _CAR 1
 
 #ifdef _CAR
 
@@ -68,6 +68,7 @@ typedef struct {
 	uint16_t voltage;
 	uint8_t temperature;
 	uint8_t bat_percentage;
+	uint16_t timer;
 } masterCAN1_BMS;
 
 

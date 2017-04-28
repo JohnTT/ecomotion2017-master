@@ -187,17 +187,16 @@ int main(void)
 		masterCAN1.voltage = BMS_Bat_Info.Voltage;
 		masterCAN1.temperature = BMS_Bat_Info.Temp;
 		masterCAN1.bat_percentage = BMS_Bat_Status.SOC;
+		masterCAN1.timer = BMS_Bat_State.Timer;
 
 		memcpy(hcan1.pTxMsg->Data, &masterCAN1, sizeof(masterCAN1));
 		status = HAL_CAN_Transmit_IT(&hcan1);
 		if (status != HAL_OK) {
 			Error_Handler();
 		}
-//		hcan1.pTxMsg->StdId = ecoMotion_MasterRTC;
-//		hcan1.pTxMsg->DLC =
 #endif
 
-		printUART2();
+//		printUART2();
 
 		HAL_Delay(10);
 
