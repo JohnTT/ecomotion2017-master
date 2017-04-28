@@ -159,8 +159,8 @@ int main(void)
 	MX_CAN2_Init();
 	MX_TIM1_Init();
 	MX_I2C1_Init();
-	MX_SDIO_SD_Init();
-	MX_FATFS_Init();
+//	MX_SDIO_SD_Init();
+//	MX_FATFS_Init();
 
 	HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1); //look into peripheral control functions to find out more about configuration
 	HAL_TIM_Base_Start_IT(&htim1); //start the base for update interrupts
