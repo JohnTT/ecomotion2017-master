@@ -141,9 +141,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 #ifdef _DEBUG_ON
 	MX_GPIO_Init();
-//	MX_CAN1_Init();
+	MX_CAN1_Init();
 	MX_USART2_UART_Init();
-//	MX_CAN2_Init();
+	MX_CAN2_Init();
 	MX_TIM1_Init();
 //	MX_I2C1_Init();
 //	MX_SDIO_SD_Init();
@@ -169,11 +169,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
 	while (1)
 	{
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+		//setAllCellRTC();
 		printf("MAIN LOOP MASTER\n\r");
 #ifdef _REBROADCAST_ALLCELL
 		// Important Information
@@ -187,18 +189,18 @@ int main(void)
 		masterCAN1.voltage = BMS_Bat_Info.Voltage;
 		masterCAN1.temperature = BMS_Bat_Info.Temp;
 		masterCAN1.bat_percentage = BMS_Bat_Status.SOC;
+		masterCAN1.timer = BMS_Bat_State.Timer;
+
 
 		memcpy(hcan1.pTxMsg->Data, &masterCAN1, sizeof(masterCAN1));
 		status = HAL_CAN_Transmit_IT(&hcan1);
 		if (status != HAL_OK) {
 			Error_Handler();
 		}
-//		hcan1.pTxMsg->StdId = ecoMotion_MasterRTC;
-//		hcan1.pTxMsg->DLC =
 #endif
 
-		//printUART2();
-		HAL_Delay(1000);
+		printUART2();
+		HAL_Delay(10);
 
 	}
   /* USER CODE END 3 */
@@ -834,6 +836,36 @@ void printUART2() {
 
 	printf("\n\r");
 
+}
+
+void setAllCellRTC() {
+	static const float _Day_Factor = 4;
+	static const float _Second_Factor = 4;
+	static const float _Year_Offset = 1985;
+
+	const long unsigned AllCell_Bat_RTC_SET = 0x18FF1521;
+
+	AllCell_Bat_RTC currentTime;
+	HAL_StatusTypeDef status;
+
+	hcan1.pTxMsg->IDE = CAN_ID_EXT;
+	hcan1.pTxMsg->RTR = CAN_RTR_DATA;
+	hcan1.pTxMsg->ExtId = AllCell_Bat_RTC_SET;
+	hcan1.pTxMsg->DLC = 8;
+
+	// Set this to what you want
+	currentTime.Year = 2017 - _Year_Offset;
+	currentTime.Month = 4;
+	currentTime.Day = 27 * _Day_Factor;
+	currentTime.Hour = 8;
+	currentTime.Minute = 0;
+	currentTime.Second = 0 * _Second_Factor;
+
+	memcpy(hcan1.pTxMsg->Data, &currentTime, sizeof(currentTime));
+	status = HAL_CAN_Transmit_IT(&hcan1);
+	if (status != HAL_OK) {
+		Error_Handler();
+	}
 }
 /* USER CODE END 4 */
 

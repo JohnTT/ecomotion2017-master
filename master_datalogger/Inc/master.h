@@ -15,7 +15,7 @@
  * memcpy(&parsedData, data, sizeof(data));
  */
 
-//#define _CAR 1
+#define _CAR 1
 
 #ifdef _CAR
 
@@ -29,8 +29,8 @@
 #define _DEBUG_ON 1
 
 #ifdef _DEBUG_ON
-//#define _REBROADCAST_ALLCELL 1
-#define _CAN_PRINTF 1
+#define _REBROADCAST_ALLCELL 1
+//#define _CAN_PRINTF 1
 #endif
 
 #endif
@@ -67,6 +67,8 @@ typedef struct {
 	uint16_t voltage;
 	uint8_t temperature;
 	uint8_t bat_percentage;
+	uint16_t timer;
+
 } masterCAN1_BMS;
 
 
@@ -164,6 +166,7 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan);
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan);
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void setAllCellRTC();
 int getTim1Prescaler();
 static void setCANbitRate(uint16_t bitRate, uint16_t periphClock, CAN_HandleTypeDef* theHcan);
 void parseBMSCAN(CanRxMsgTypeDef *BMSRxMsg);
