@@ -83,7 +83,7 @@ static float DIAMETER = 0.50; //50 cm diameter
 static float PI = 3.1415926535; //the number pi
 static int CLOCKSPEED = 10000; //timer's clock
 static int NUM_MAGNET = 2; //the number of magnets on the wheel
-static unsigned int PERIOD_TIMER = 60000; //timer's period
+static unsigned int PERIOD_TIMER = 12500; //timer's period
 float rpmChan1; //revolutions per minute for one of the wheels of the vehicle
 float speedChan1; //holds the car's speed from tim1 channel 1
 //float rpmChan2; //revolutions per minute for the other wheel of the vehicle
@@ -674,7 +674,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){//for counter update
 		lastCapture = 70000;
 	}
 	else {
-		tim1Ch1Overflow = 1;
+		tim1Ch1Overflow++;
 	}
 
 }
@@ -856,7 +856,7 @@ void setAllCellRTC() {
 	static const float _Second_Factor = 4;
 	static const float _Year_Offset = 1985;
 
-	const long unsigned AllCell_Bat_RTC_SET = 0x18FF1521;
+	const long unsigned AllCell_Bat_RTC_SET = 0x18FF1621;
 
 	AllCell_Bat_RTC currentTime;
 	HAL_StatusTypeDef status;
